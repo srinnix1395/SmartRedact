@@ -2,12 +2,17 @@ package com.example.smartredact.common.widget.timelineview
 
 import android.content.Context
 import android.util.AttributeSet
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartredact.data.model.VideoMetadata
 
 class TimeLineView : RecyclerView {
 
+    private lateinit var linearLayoutManager: LinearLayoutManager
     private lateinit var frameAdapter: FrameAdapter
+
+    private var enabledScrollToUpdate: Boolean = true
+
     private var scrollListener: TimeLineScrollListener? = null
     private var onProgressChanged: ((Float, Float) -> Unit)? = null
 
@@ -23,6 +28,9 @@ class TimeLineView : RecyclerView {
     }
 
     private fun initView() {
+        linearLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        layoutManager = linearLayoutManager
+
         frameAdapter = FrameAdapter(context, arrayListOf(), null)
         adapter = frameAdapter
     }
@@ -49,5 +57,14 @@ class TimeLineView : RecyclerView {
         val totalWidth = frame.width * frame.frames.size
         scrollListener = TimeLineScrollListener(xPivot, frame.width, totalWidth, onProgressChanged)
         addOnScrollListener(scrollListener!!)
+    }
+
+    fun scrollToPositionWithOffset(position: Int, offset: Int) {
+        linearLayoutManager.scrollToPositionWithOffset(position, offset)
+    }
+
+    fun setEnabledScrollToUpdate(isEnabled: Boolean) {
+        enabledScrollToUpdate = isEnabled
+        scrollListener?.setEnabled(isEnabled)
     }
 }

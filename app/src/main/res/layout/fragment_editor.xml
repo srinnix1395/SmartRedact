@@ -149,7 +149,6 @@
             android:layout_marginTop="20dp"
             android:clipToPadding="false"
             android:orientation="horizontal"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/item_frame" />
 
         <View
