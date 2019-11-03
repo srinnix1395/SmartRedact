@@ -4,6 +4,8 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+apply plugin: 'kotlin-kapt'
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
@@ -24,6 +26,12 @@ android {
     androidExtensions {
         experimental = true
     }
+    compileOptions {
+        targetCompatibility "1.8"
+        sourceCompatibility = "1.8"
+    }
+
+    kapt { generateStubs = true }
 }
 
 dependencies {
@@ -43,7 +51,12 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxjava:2.2.9'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
 
-    implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever:1.0.14'
-
     implementation 'com.github.bumptech.glide:glide:4.9.0'
+
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.10.5'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.10.5'
+
+    //glide
+    implementation 'com.github.bumptech.glide:glide:4.9.0'
+    kapt 'com.github.bumptech.glide:compiler:4.9.0'
 }

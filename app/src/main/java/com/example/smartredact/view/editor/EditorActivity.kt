@@ -1,4 +1,4 @@
-package com.example.smartredact.editor
+package com.example.smartredact.view.editor
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

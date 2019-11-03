@@ -13,8 +13,9 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".editor.EditorActivity"
-            android:screenOrientation="landscape">
+            android:name="com.example.smartredact.view.editor.EditorActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
