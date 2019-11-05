@@ -26,6 +26,12 @@ import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_editor.*
+import com.example.smartredact.common.facerecoginition.Classifier
+import android.graphics.Bitmap
+import android.R
+import com.example.smartredact.common.facerecoginition.TensorFlowYoloDetector
+import java.io.IOException
+
 
 /**
  * Created by TuHA on 10/31/2019.
@@ -36,6 +42,10 @@ class EditorFragment : Fragment() {
         const val REQUEST_CODE_SELECT_FILE = 1234
         const val FRAME_HEIGHT_FACTOR = 0.625F
         const val INTERVAL = 25L
+
+        const val YOLO_MODEL_FILE = "yolo2_face.tflite"
+        const val YOLO_INPUT_SIZE = 416
+        const val YOLO_BLOCK_SIZE = 32
     }
 
     private var player: SimpleExoPlayer? = null
@@ -43,6 +53,24 @@ class EditorFragment : Fragment() {
 
     private var updateSeekBarHandler: Handler = Handler()
     private val updateSeekBarRunnable: UpdateSeekBarRunnable = UpdateSeekBarRunnable()
+
+    private val detector: Classifier? by lazy {
+        var detector: Classifier?
+
+        detector = try {
+            TensorFlowYoloDetector.create(
+                context?.assets,
+                YOLO_MODEL_FILE,
+                YOLO_INPUT_SIZE,
+                YOLO_BLOCK_SIZE)
+        } catch (e: IOException) {
+            e.printStackTrace()
+            null
+        }
+
+        return@lazy detector
+    }
+
 
     private val progressDialog: ProgressCommonDialog by lazy {
         return@lazy ProgressCommonDialog(context)
@@ -88,6 +116,10 @@ class EditorFragment : Fragment() {
             }
         }
 
+        imvDetectFace.setOnClickListener {
+            detectFaces()
+        }
+
         imvPlayPause.setOnClickListener {
             playOrPause()
         }
@@ -120,8 +152,8 @@ class EditorFragment : Fragment() {
             intent.type = "video/*"
             intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
             startActivityForResult(
-                    Intent.createChooser(intent, "Choose a file"),
-                    REQUEST_CODE_SELECT_FILE
+                Intent.createChooser(intent, "Choose a file"),
+                REQUEST_CODE_SELECT_FILE
             )
         }
 
@@ -136,29 +168,29 @@ class EditorFragment : Fragment() {
 
     private fun processVideo(data: Uri) {
         Single
-                .fromCallable {
-                    return@fromCallable VideoUtils.extractFrames(
-                            context,
-                            data,
-                            timeLineView.height * FRAME_HEIGHT_FACTOR
-                    )
-                }
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnSubscribe {
-                    showProgress()
-                }
-                .doFinally {
-                    dismissProgress()
-                }
-                .subscribe({ videoMetadata ->
-                    this.videoMetadata = videoMetadata
-                    tvCurrentTime.text = TimeUtils.format(0L)
-                    tvDuration.text = TimeUtils.format(videoMetadata.duration)
-                    timeLineView.setData(videoMetadata.frame)
-                }, {
-                    it.printStackTrace()
-                })
+            .fromCallable {
+                return@fromCallable VideoUtils.extractMetadata(
+                    context,
+                    data,
+                    timeLineView.height * FRAME_HEIGHT_FACTOR
+                )
+            }
+            .subscribeOn(Schedulers.computation())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnSubscribe {
+                showProgress()
+            }
+            .doFinally {
+                dismissProgress()
+            }
+            .subscribe({ videoMetadata ->
+                this.videoMetadata = videoMetadata
+                tvCurrentTime.text = TimeUtils.format(0L)
+                tvDuration.text = TimeUtils.format(videoMetadata.duration)
+                timeLineView.setData(videoMetadata.frame)
+            }, {
+                it.printStackTrace()
+            })
     }
 
     private fun releasePlayer() {
@@ -211,6 +243,12 @@ class EditorFragment : Fragment() {
     private fun dismissProgress() {
         if (progressDialog.isShowing) progressDialog.dismiss()
     }
+
+    private fun detectFaces() {
+        val croppedBitmap: Bitmap? = null
+        val results = detector.recognizeImage(croppedBitmap)
+    }
+
 
     inner class UpdateSeekBarRunnable : Runnable {
 
