@@ -15,6 +15,7 @@ class TimeLineView : RecyclerView {
 
     private var scrollListener: TimeLineScrollListener? = null
     private var onProgressChanged: ((Float, Float) -> Unit)? = null
+    private var onScrollStateChanged: ((Int) -> Unit)? = null
 
     constructor(context: Context) : super(context)
 
@@ -39,6 +40,10 @@ class TimeLineView : RecyclerView {
         this.onProgressChanged = listener
     }
 
+    fun setOnScrollStateChanged(listener: ((Int) -> Unit)?) {
+        this.onScrollStateChanged = listener
+    }
+
     fun setData(frame: VideoMetadata.Frame) {
         frameAdapter.setData(frame.frames)
         setupScrollListener(frame)
@@ -55,7 +60,7 @@ class TimeLineView : RecyclerView {
 
         val xPivot = width.toFloat() / 2
         val totalWidth = frame.width * frame.frames.size
-        scrollListener = TimeLineScrollListener(xPivot, frame.width, totalWidth, onProgressChanged)
+        scrollListener = TimeLineScrollListener(xPivot, frame.width, totalWidth, onProgressChanged, onScrollStateChanged)
         addOnScrollListener(scrollListener!!)
     }
 

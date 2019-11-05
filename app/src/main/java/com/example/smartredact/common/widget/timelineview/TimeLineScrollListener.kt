@@ -5,7 +5,8 @@ import androidx.recyclerview.widget.RecyclerView
 class TimeLineScrollListener(private val xPivot: Float,
                              private val frameWidth: Float,
                              private val total: Float,
-                             private var onProgressChanged: ((Float, Float) -> Unit)?) : RecyclerView.OnScrollListener() {
+                             private var onProgressChanged: ((Float, Float) -> Unit)?,
+                             private var onScrollStateChanged: ((Int) -> Unit)?) : RecyclerView.OnScrollListener() {
 
     private var isEnabled = true
 
@@ -21,6 +22,11 @@ class TimeLineScrollListener(private val xPivot: Float,
         val progress = currentPosition * frameWidth + Math.abs(view.x - xPivot)
 
         onProgressChanged?.invoke(progress, total)
+    }
+
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+        super.onScrollStateChanged(recyclerView, newState)
+        onScrollStateChanged?.invoke(newState)
     }
 
     fun setEnabled(enabled: Boolean) {

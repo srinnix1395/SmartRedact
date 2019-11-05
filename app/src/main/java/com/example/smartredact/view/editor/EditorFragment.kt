@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.RecyclerView
 import com.example.smartredact.R
 import com.example.smartredact.common.utils.TimeUtils
 import com.example.smartredact.common.utils.VideoUtils
@@ -66,6 +67,7 @@ class EditorFragment : Fragment() {
                     updateSeekBarHandler.post(updateSeekBarRunnable)
                     imvPlayPause.setImageResource(R.drawable.ic_pause)
                 } else {
+                    stopPlayer()
                     timeLineView.setEnabledScrollToUpdate(true)
                     updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
                     imvPlayPause.setImageResource(R.drawable.ic_play)
@@ -75,8 +77,15 @@ class EditorFragment : Fragment() {
         })
         playerControlView.player = player
 
-        timeLineView.setOnProgressChanged{progress, total ->
-            calculateTextCurrentTime(progress, total, true)
+        timeLineView.apply {
+            setOnProgressChanged { progress, total ->
+                calculateTextCurrentTime(progress, total, true)
+            }
+            setOnScrollStateChanged { state ->
+                if (state == RecyclerView.SCROLL_STATE_DRAGGING && player?.isPlaying == true) {
+                    stopPlayer()
+                }
+            }
         }
 
         imvPlayPause.setOnClickListener {
@@ -157,9 +166,6 @@ class EditorFragment : Fragment() {
             return
         }
 
-//        playbackPosition = player!!.currentPosition
-//        currentWindow = player!!.currentWindowIndex
-//        playWhenReady = player!!.playWhenReady
         player!!.release()
         player = null
     }
@@ -182,6 +188,10 @@ class EditorFragment : Fragment() {
         }
 
         player?.playWhenReady = !player!!.isPlaying
+    }
+
+    private fun stopPlayer() {
+        player?.playWhenReady = false
     }
 
     private fun updateSeekBar() {
