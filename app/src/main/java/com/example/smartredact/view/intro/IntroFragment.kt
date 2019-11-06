@@ -1,4 +1,4 @@
-package com.example.smartredact.view.splash
+package com.example.smartredact.view.intro
 
 import android.content.Intent
 import android.graphics.Color
@@ -12,13 +12,12 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager.widget.ViewPager
 import com.example.smartredact.R
 import com.example.smartredact.view.home.HomeActivity
-import com.google.android.exoplayer2.util.ColorParser
-import kotlinx.android.synthetic.main.fragment_splash_screen.*
+import kotlinx.android.synthetic.main.fragment_intro.*
 
 
-class SplashFragment : Fragment() {
+class IntroFragment : Fragment() {
 
-    lateinit var splashViewPagerAdapter: SplashViewPagerAdapter
+    lateinit var introViewPagerAdapter: IntroViewPagerAdapter
     var currentPage: Int = 0
 
     override fun onCreateView(
@@ -26,7 +25,7 @@ class SplashFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_splash_screen, container, false)
+        return inflater.inflate(R.layout.fragment_intro, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -35,10 +34,10 @@ class SplashFragment : Fragment() {
     }
 
     private fun initView() {
-        splashViewPagerAdapter = SplashViewPagerAdapter(this.context!!)
-        vpSplashScreen.adapter = splashViewPagerAdapter
+        introViewPagerAdapter = IntroViewPagerAdapter(this.context!!)
+        vpIntroScreen.adapter = introViewPagerAdapter
         addBottomDot(currentPage)
-        vpSplashScreen.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
+        vpIntroScreen.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
             override fun onPageScrollStateChanged(state: Int) {
 
             }
@@ -54,7 +53,7 @@ class SplashFragment : Fragment() {
             override fun onPageSelected(position: Int) {
                 currentPage = position
                 addBottomDot(position)
-                if (position == splashViewPagerAdapter.count - 1) {
+                if (position == introViewPagerAdapter.count - 1) {
                     btnSkip.visibility = View.INVISIBLE
                     btnNext.visibility = View.GONE
                     btnGotIt.visibility = View.VISIBLE
@@ -67,7 +66,7 @@ class SplashFragment : Fragment() {
 
         })
         btnNext.setOnClickListener {
-            vpSplashScreen.currentItem = ++currentPage
+            vpIntroScreen.currentItem = ++currentPage
         }
         btnGotIt.setOnClickListener {
             lauchHomeActivity()
@@ -79,7 +78,7 @@ class SplashFragment : Fragment() {
 
     private fun addBottomDot(currentPage: Int) {
         llDot.removeAllViews()
-        for (i in 0 until splashViewPagerAdapter.count) {
+        for (i in 0 until introViewPagerAdapter.count) {
             val dot = TextView(this.context)
             dot.text = Html.fromHtml("&#8226;")
             dot.textSize = 40F
@@ -95,6 +94,7 @@ class SplashFragment : Fragment() {
     fun lauchHomeActivity(){
         val intent = Intent(this.activity, HomeActivity::class.java)
         startActivity(intent)
+        this.activity?.finish()
     }
 
 }

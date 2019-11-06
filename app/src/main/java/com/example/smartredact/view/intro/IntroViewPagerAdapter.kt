@@ -1,4 +1,4 @@
-package com.example.smartredact.view.splash
+package com.example.smartredact.view.intro
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -7,13 +7,13 @@ import android.view.ViewGroup
 import androidx.viewpager.widget.PagerAdapter
 import com.example.smartredact.R
 
-class SplashViewPagerAdapter(val mContext: Context) : PagerAdapter() {
+class IntroViewPagerAdapter(val mContext: Context) : PagerAdapter() {
 
     companion object {
         val layouts: IntArray = intArrayOf(
-            R.layout.splash_screen_1,
-            R.layout.splash_screen_2,
-            R.layout.splash_screen_3
+            R.layout.intro_page_1,
+            R.layout.intro_page_2,
+            R.layout.intro_page_3
         )
     }
 
