@@ -2,6 +2,9 @@ package com.example.smartredact.view.editor
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -11,8 +14,12 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartredact.R
+import com.example.smartredact.common.facerecoginition.Classifier
+import com.example.smartredact.common.facerecoginition.TensorFlowYoloDetector
+import com.example.smartredact.common.facerecoginition.env.ImageUtils
 import com.example.smartredact.common.utils.TimeUtils
 import com.example.smartredact.common.utils.VideoUtils
+import com.example.smartredact.common.utils.addToCompositeDisposable
 import com.example.smartredact.data.model.VideoMetadata
 import com.example.smartredact.view.dialog.ProgressCommonDialog
 import com.google.android.exoplayer2.ExoPlayerFactory
@@ -24,12 +31,9 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util.getUserAgent
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_editor.*
-import com.example.smartredact.common.facerecoginition.Classifier
-import android.graphics.Bitmap
-import android.R
-import com.example.smartredact.common.facerecoginition.TensorFlowYoloDetector
 import java.io.IOException
 
 
@@ -46,6 +50,8 @@ class EditorFragment : Fragment() {
         const val YOLO_MODEL_FILE = "yolo2_face.tflite"
         const val YOLO_INPUT_SIZE = 416
         const val YOLO_BLOCK_SIZE = 32
+
+        const val MINIMUM_CONFIDENCE_YOLO = 0.25
     }
 
     private var player: SimpleExoPlayer? = null
@@ -54,23 +60,12 @@ class EditorFragment : Fragment() {
     private var updateSeekBarHandler: Handler = Handler()
     private val updateSeekBarRunnable: UpdateSeekBarRunnable = UpdateSeekBarRunnable()
 
-    private val detector: Classifier? by lazy {
-        var detector: Classifier?
+    private var detector: Classifier? = null
+    private var croppedBitmap: Bitmap? = null
+    private var frameToCropTransform: Matrix? = null
+    private var cropToFrameTransform: Matrix? = null
 
-        detector = try {
-            TensorFlowYoloDetector.create(
-                context?.assets,
-                YOLO_MODEL_FILE,
-                YOLO_INPUT_SIZE,
-                YOLO_BLOCK_SIZE)
-        } catch (e: IOException) {
-            e.printStackTrace()
-            null
-        }
-
-        return@lazy detector
-    }
-
+    private val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
     private val progressDialog: ProgressCommonDialog by lazy {
         return@lazy ProgressCommonDialog(context)
@@ -123,6 +118,7 @@ class EditorFragment : Fragment() {
         imvPlayPause.setOnClickListener {
             playOrPause()
         }
+
         chooseFiles()
     }
 
@@ -191,6 +187,7 @@ class EditorFragment : Fragment() {
             }, {
                 it.printStackTrace()
             })
+            .addToCompositeDisposable(compositeDisposable)
     }
 
     private fun releasePlayer() {
@@ -245,10 +242,82 @@ class EditorFragment : Fragment() {
     }
 
     private fun detectFaces() {
-        val croppedBitmap: Bitmap? = null
-        val results = detector.recognizeImage(croppedBitmap)
+        if (videoMetadata == null) {
+            return
+        }
+
+        if (detector == null) {
+            initDetector()
+        }
+
+        Single
+            .fromCallable {
+                val frames = VideoUtils.extractFrames(context, videoMetadata!!.uri, videoMetadata!!.frame.frames.size)
+                val results = arrayListOf<Classifier.Recognition>()
+
+                frames.forEach {
+                    Canvas(croppedBitmap!!).apply {
+                        drawBitmap(it, frameToCropTransform!!, null)
+                    }
+                    detector?.recognizeImage(croppedBitmap)?.let {
+                        results.addAll(it)
+                    }
+                }
+
+                val mappedRecognitions = arrayListOf<Classifier.Recognition>()
+
+                for (result in results         ) {
+                    val location = result.location
+                    if (location != null && result.confidence >= MINIMUM_CONFIDENCE_YOLO) {
+                        cropToFrameTransform?.mapRect(location)
+                        result.location = location
+                        mappedRecognitions.add(result)
+                    }
+                }
+
+                return@fromCallable mappedRecognitions
+            }
+            .subscribeOn(Schedulers.computation())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnSubscribe {
+                showProgress()
+            }
+            .doFinally {
+                dismissProgress()
+            }
+            .subscribe({ results ->
+                println(results.size)
+            }, {
+                it.printStackTrace()
+            })
+            .addToCompositeDisposable(compositeDisposable)
     }
 
+    private fun initDetector() {
+        try {
+            detector = TensorFlowYoloDetector.create(
+                context?.assets,
+                YOLO_MODEL_FILE,
+                YOLO_INPUT_SIZE,
+                YOLO_BLOCK_SIZE)
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
+        val previewWidth = videoMetadata!!.width.toInt()
+        val previewHeight = videoMetadata!!.height.toInt()
+        val cropSize = YOLO_INPUT_SIZE
+        croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Bitmap.Config.ARGB_8888)
+
+        val sensorOrientation = 90
+        frameToCropTransform = ImageUtils.getTransformationMatrix(
+            previewWidth, previewHeight,
+            cropSize, cropSize,
+            sensorOrientation, true)
+
+        cropToFrameTransform = Matrix()
+        frameToCropTransform?.invert(cropToFrameTransform)
+    }
 
     inner class UpdateSeekBarRunnable : Runnable {
 

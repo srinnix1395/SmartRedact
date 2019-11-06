@@ -36,6 +36,20 @@ object VideoUtils {
         return VideoMetadata(uri, duration, width, height, frame)
     }
 
+    fun extractFrames(context: Context?, uri: Uri, frameCount: Int): ArrayList<Bitmap> {
+        val retriever = MediaMetadataRetriever()
+        val frames = arrayListOf<Bitmap>()
+
+        retriever.setDataSource(context, uri)
+
+        for (i in 0 until frameCount) {
+            val bitmap = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST)
+            frames.add(bitmap)
+        }
+
+        return frames
+    }
+
     fun convertImageToBitmap(image: Image, matrix: Matrix): Bitmap {
         val planes = image.planes
 
