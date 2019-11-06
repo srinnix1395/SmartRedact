@@ -195,11 +195,18 @@
     <RelativeLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="1dp"
+        android:layout_marginTop="@dimen/padding_editor"
+        android:layout_marginEnd="@dimen/padding_editor"
+        android:layout_marginBottom="@dimen/padding_editor"
         app:layout_constraintBottom_toTopOf="@+id/guideline1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline2"
         app:layout_constraintTop_toTopOf="parent">
+
+        <com.example.smartredact.common.widget.faceview.FaceView
+            android:id="@+id/faceView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
     </RelativeLayout>
 
