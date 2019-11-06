@@ -102,6 +102,7 @@ class EditorFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (data == null || resultCode != Activity.RESULT_OK) {
+            this.activity?.finish()
             return
         }
 
