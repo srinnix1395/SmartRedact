@@ -8,5 +8,5 @@ object Constant {
     const val YOLO_INPUT_SIZE = 416
     const val YOLO_BLOCK_SIZE = 32
 
-    const val MINIMUM_CONFIDENCE_YOLO = 0.25
+    const val MINIMUM_CONFIDENCE_YOLO = 0.5
 }

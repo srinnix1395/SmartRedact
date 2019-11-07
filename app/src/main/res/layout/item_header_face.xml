@@ -19,19 +19,22 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/dp_16"
         android:layout_weight="1"
+        android:textColor="@color/white"
         tools:text="3" />
 
     <TextView
         android:id="@+id/tvTime"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="8"
+        android:layout_weight="6"
+        android:textColor="@color/white"
         tools:text="00:02 - 01:05" />
 
     <ImageView
         android:id="@+id/imvExpand"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_chevron_down" />
 
 </LinearLayout>

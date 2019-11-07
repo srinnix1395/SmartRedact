@@ -25,7 +25,7 @@ class FaceView : RecyclerView {
     }
 
     private fun initView() {
-        linearLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        linearLayoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         layoutManager = linearLayoutManager
 
         faceAdapter = FaceAdapter(context, arrayListOf(), null)

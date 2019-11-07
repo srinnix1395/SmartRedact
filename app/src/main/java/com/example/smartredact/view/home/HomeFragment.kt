@@ -63,7 +63,9 @@ class HomeFragment : Fragment() {
     }
 
     private fun loadMediaFromLocal() {
-        chooseFiles()
+        activity?.supportFragmentManager?.addFragment(EditorFragment(), null, EditorFragment::class.java.simpleName)
+
+//        chooseFiles()
     }
 
     private fun chooseFiles() {
@@ -89,7 +91,7 @@ class HomeFragment : Fragment() {
         when (requestCode) {
             EditorFragment.REQUEST_CODE_SELECT_FILE -> {
                 val bundle = Bundle()
-                bundle.putString(Constants.BUNDLE, data.data.toString())
+                bundle.putParcelable(Constants.BUNDLE, data.data)
                 activity?.supportFragmentManager?.addFragment(EditorFragment(), bundle, EditorFragment::class.java.simpleName)
             }
         }

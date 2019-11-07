@@ -2,12 +2,13 @@
 <resources>
     <dimen name="radius_editor">3dp</dimen>
     <dimen name="padding_editor">3dp</dimen>
+
+    <dimen name="dp_8">8dp</dimen>
     <dimen name="dp_16">16dp</dimen>
     <dimen name="dp_24">24dp</dimen>
-    <dimen name="dp_8">8dp</dimen>
+    <dimen name="dp_20">20dp</dimen>
+    <dimen name="dp_75">75dp</dimen>
+
     <dimen name="sp_16">16sp</dimen>
     <dimen name="sp_24">24sp</dimen>
-    <dimen name="sp_16">16sp</dimen>
-    <dimen name="dp_75">75dp</dimen>
-    <dimen name="dp_20">20dp</dimen>
 </resources>

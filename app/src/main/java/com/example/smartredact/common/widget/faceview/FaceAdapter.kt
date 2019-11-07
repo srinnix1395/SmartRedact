@@ -11,7 +11,7 @@ import com.example.smartredact.common.widget.expandablerecyclerview.CommonExpand
  */
 class FaceAdapter(context: Context?,
                   private val listItems: ArrayList<Face>,
-                  private val interactor: Interactor?) : CommonExpandableAdapter<FaceHeaderViewHolder, FaceChildViewHolder>() {
+                  private val interactor: Interactor?) : CommonExpandableAdapter<FaceHeaderViewHolder, FaceChildViewHolder>(false, true) {
 
     private val layoutInflater: LayoutInflater = LayoutInflater.from(context)
 

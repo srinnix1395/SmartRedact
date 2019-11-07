@@ -19,7 +19,6 @@ import com.example.smartredact.common.facerecoginition.Classifier
 import com.example.smartredact.common.facerecoginition.Constant
 import com.example.smartredact.common.facerecoginition.TensorFlowYoloDetector
 import com.example.smartredact.common.utils.ImageUtils
-import com.example.smartredact.common.constants.Constants
 import com.example.smartredact.common.utils.TimeUtils
 import com.example.smartredact.common.utils.VideoUtils
 import com.example.smartredact.common.utils.addToCompositeDisposable
@@ -116,10 +115,12 @@ class EditorFragment : Fragment() {
         imvPlayPause.setOnClickListener {
             playOrPause()
         }
-        arguments?.getString(Constants.BUNDLE).let {
-            showVideo(Uri.parse(it))
-            processVideo(Uri.parse(it))
-        }
+//        arguments?.getString(Constants.BUNDLE).let {
+//            showVideo(Uri.parse(it))
+//            processVideo(Uri.parse(it))
+//        }
+
+        chooseFiles()
     }
 
     override fun onDestroyView() {
@@ -127,35 +128,35 @@ class EditorFragment : Fragment() {
         releasePlayer()
     }
 
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-//        super.onActivityResult(requestCode, resultCode, data)
-//        if (data == null || resultCode != Activity.RESULT_OK) {
-//            this.activity?.finish()
-//            return
-//        }
-//
-//        when (requestCode) {
-//            REQUEST_CODE_SELECT_FILE -> {
-//                showVideo(data.data!!)
-//                processVideo(data.data!!)
-//            }
-//        }
-//    }
-//
-//    private fun chooseFiles() {
-//        fun openIntentGetFile() {
-//            val intent = Intent(Intent.ACTION_GET_CONTENT)
-//            intent.addCategory(Intent.CATEGORY_OPENABLE)
-//            intent.type = "video/*"
-//            intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
-//            startActivityForResult(
-//                    Intent.createChooser(intent, "Choose a file"),
-//                    REQUEST_CODE_SELECT_FILE
-//            )
-//        }
-//
-//        openIntentGetFile()
-//    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (data == null || resultCode != Activity.RESULT_OK) {
+            this.activity?.finish()
+            return
+        }
+
+        when (requestCode) {
+            REQUEST_CODE_SELECT_FILE -> {
+                showVideo(data.data!!)
+                processVideo(data.data!!)
+            }
+        }
+    }
+
+    private fun chooseFiles() {
+        fun openIntentGetFile() {
+            val intent = Intent(Intent.ACTION_GET_CONTENT)
+            intent.addCategory(Intent.CATEGORY_OPENABLE)
+            intent.type = "video/*"
+            intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+            startActivityForResult(
+                    Intent.createChooser(intent, "Choose a file"),
+                    REQUEST_CODE_SELECT_FILE
+            )
+        }
+
+        openIntentGetFile()
+    }
 
     private fun showVideo(data: Uri) {
         val dataSourceFactory = DefaultDataSourceFactory(context, getUserAgent(context, "SmartRedact"))

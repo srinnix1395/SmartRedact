@@ -14,6 +14,6 @@ class FaceChildViewHolder(override val containerView: View,
                           interactor: FaceAdapter.Interactor?) : CommonChildViewHolder(containerView), LayoutContainer {
 
     fun bindData(recognition: Classifier.Recognition) {
-        tvTime.text = TimeUtils.format(recognition.time, false)
+        tvTime.text = TimeUtils.format(recognition.time * 1000, false)
     }
 }

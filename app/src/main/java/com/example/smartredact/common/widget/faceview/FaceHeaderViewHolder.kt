@@ -2,7 +2,6 @@ package com.example.smartredact.common.widget.faceview
 
 import android.view.View
 import com.example.smartredact.R
-import com.example.smartredact.common.facerecoginition.Classifier
 import com.example.smartredact.common.utils.TimeUtils
 import com.example.smartredact.common.widget.expandablerecyclerview.CommonHeaderViewHolder
 import kotlinx.android.extensions.LayoutContainer
@@ -16,14 +15,14 @@ class FaceHeaderViewHolder(override val containerView: View,
 
     fun bindData(face: Face) {
         tvCount.text = face.face.size.toString()
-        bindTextTime(face.face)
+        bindTextTime(face.startTime, face.endTime)
     }
 
-    private fun bindTextTime(face: ArrayList<Classifier.Recognition>) {
-        val startTime = TimeUtils.format(face.first().time, false)
-        val endTime = TimeUtils.format(face.last().time, false)
+    private fun bindTextTime(startTime: Long, endTime: Long) {
+        val startText = TimeUtils.format(startTime * 1000, false)
+        val endText = TimeUtils.format(endTime * 1000, false)
 
-        tvTime.text = "$startTime - $endTime"
+        tvTime.text = "$startText - $endText"
     }
 
     override fun onHeaderExpandedChanged(expanded: Boolean) {
