@@ -11,7 +11,8 @@ import java.util.*
 
 class FrameAdapter(context: Context?,
                    private val listItems: ArrayList<Bitmap>,
-                   private val interactor: Interactor?) : RecyclerView.Adapter<FrameViewHolder>() {
+                   private val interactor: Interactor?,
+                   private val timeLineView: TimeLineView) : RecyclerView.Adapter<FrameViewHolder>() {
 
     companion object {
         const val FIRST_ITEM = 1
@@ -32,7 +33,7 @@ class FrameAdapter(context: Context?,
     }
 
     override fun onBindViewHolder(holder: FrameViewHolder, position: Int) {
-        holder.bindData(listItems[position])
+        holder.bindData(listItems[position], timeLineView)
     }
 
     override fun getItemCount(): Int {

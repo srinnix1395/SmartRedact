@@ -131,6 +131,7 @@
         app:use_controller="false" />
 
     <RelativeLayout
+        android:id="@+id/layoutVideo"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="@dimen/padding_editor"

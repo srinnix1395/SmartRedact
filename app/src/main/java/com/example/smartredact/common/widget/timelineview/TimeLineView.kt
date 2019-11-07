@@ -31,7 +31,7 @@ class TimeLineView : RecyclerView {
         linearLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         layoutManager = linearLayoutManager
 
-        frameAdapter = FrameAdapter(context, arrayListOf(), null)
+        frameAdapter = FrameAdapter(context, arrayListOf(), null, this)
         adapter = frameAdapter
     }
 

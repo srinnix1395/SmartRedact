@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -131,7 +132,7 @@ class EditorFragment : Fragment() {
                     return@fromCallable VideoUtils.extractFrames(
                             context,
                             data,
-                            timeLineView.height * FRAME_HEIGHT_FACTOR
+                            265f
                     )
                 }
                 .subscribeOn(Schedulers.computation())
@@ -169,7 +170,7 @@ class EditorFragment : Fragment() {
             return
         }
 
-        val currentTime = ((progress * videoMetadata!!.duration) / total).toLong()
+        val currentTime = (progress * videoMetadata!!.duration / total).toLong()
         tvCurrentTime.text = TimeUtils.format(currentTime)
         if (enabledSeek) {
             player?.seekTo(currentTime)
@@ -189,8 +190,9 @@ class EditorFragment : Fragment() {
         val totalWidth = videoMetadata!!.frame.width * videoMetadata!!.frame.frames.size
         val progressX = (progressTime * totalWidth) / videoMetadata!!.duration
         val position = (progressX / videoMetadata!!.frame.width).toInt()
-        val offset = (progressX % videoMetadata!!.frame.width).toInt()
-        timeLineView.scrollToPositionWithOffset(position, -offset)
+        val offset = (progressX % videoMetadata!!.frame.width)
+        Log.d("kiennt", "$progressTime   $totalWidth   $progressX     ${videoMetadata!!.frame.width}      ${videoMetadata!!.frame.frames.size}")
+        timeLineView.scrollToPositionWithOffset(position, -offset.toInt())
         calculateTextCurrentTime(progressX, totalWidth, false)
     }
 
