@@ -32,6 +32,7 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util.getUserAgent
+import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -170,31 +171,28 @@ class EditorFragment : Fragment() {
     }
 
     private fun processVideo(data: Uri) {
-        Single
-            .fromCallable {
-                return@fromCallable VideoUtils.extractMetadata(
-                    context,
-                    data,
-                    timeLineView.height * FRAME_HEIGHT_FACTOR
-                )
-            }
-            .subscribeOn(Schedulers.computation())
-            .observeOn(AndroidSchedulers.mainThread())
-            .doOnSubscribe {
-                showProgress()
-            }
-            .doFinally {
-                dismissProgress()
-            }
-            .subscribe({ videoMetadata ->
-                this.videoMetadata = videoMetadata
-                tvCurrentTime.text = TimeUtils.format(0L, true)
-                tvDuration.text = TimeUtils.format(videoMetadata.duration, true)
-                timeLineView.setData(videoMetadata.frame)
-            }, {
-                it.printStackTrace()
-            })
-            .addToCompositeDisposable(compositeDisposable)
+        Observable
+                .fromCallable {
+                    return@fromCallable VideoUtils.extractMetadata(context, data, timeLineView.height * FRAME_HEIGHT_FACTOR)
+                }
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+
+                .doOnSubscribe {
+                    showProgress()
+                }
+                .doFinally {
+                    dismissProgress()
+                }
+                .subscribe({ videoMetadata ->
+                    this.videoMetadata = videoMetadata
+                    tvCurrentTime.text = TimeUtils.format(0L, true)
+                    tvDuration.text = TimeUtils.format(videoMetadata.duration, true)
+                    timeLineView.setData(videoMetadata.frame)
+                }, {
+                    it.printStackTrace()
+                })
+                .addToCompositeDisposable(compositeDisposable)
     }
 
     private fun releasePlayer() {
@@ -266,68 +264,68 @@ class EditorFragment : Fragment() {
         }
 
         Single
-            .fromCallable {
-                val frames = VideoUtils.extractFrames(context, videoMetadata!!.uri, videoMetadata!!.frame.frames.size)
-                val mappedRecognitions = ArrayMap<String, ArrayList<Classifier.Recognition>>()
+                .fromCallable {
+                    val frames = VideoUtils.extractFrames(context, videoMetadata!!.uri, videoMetadata!!.frame.frames.size)
+                    val mappedRecognitions = ArrayMap<String, ArrayList<Classifier.Recognition>>()
 
-                frames.forEachIndexed { index, bitmap ->
-                    Canvas(croppedBitmap!!).apply {
-                        drawBitmap(bitmap, frameToCropTransform!!, null)
-                    }
-                    detector?.recognizeImage(croppedBitmap)?.let { listRecognitions ->
-                        listRecognitions.forEach {
-                            val location = it.location
-                            if (location != null && it.confidence >= Constant.MINIMUM_CONFIDENCE_YOLO) {
-                                cropToFrameTransform?.mapRect(location)
-                                it.location = location
+                    frames.forEachIndexed { index, bitmap ->
+                        Canvas(croppedBitmap!!).apply {
+                            drawBitmap(bitmap, frameToCropTransform!!, null)
+                        }
+                        detector?.recognizeImage(croppedBitmap)?.let { listRecognitions ->
+                            listRecognitions.forEach {
+                                val location = it.location
+                                if (location != null && it.confidence >= Constant.MINIMUM_CONFIDENCE_YOLO) {
+                                    cropToFrameTransform?.mapRect(location)
+                                    it.location = location
 
-                                it.time = index.toLong()
+                                    it.time = index.toLong()
 
-                                val list = mappedRecognitions[it.id]
-                                if (list == null) {
-                                    mappedRecognitions[it.id] = arrayListOf(it)
-                                } else {
-                                    list.add(it)
+                                    val list = mappedRecognitions[it.id]
+                                    if (list == null) {
+                                        mappedRecognitions[it.id] = arrayListOf(it)
+                                    } else {
+                                        list.add(it)
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                mappedRecognitions.values.forEach { value ->
-                    value?.sortBy { it.time }
-                }
+                    mappedRecognitions.values.forEach { value ->
+                        value?.sortBy { it.time }
+                    }
 
-                return@fromCallable mappedRecognitions.map { map ->
-                    val firstFace = map.value.first()
-                    val lastFace = map.value.last()
+                    return@fromCallable mappedRecognitions.map { map ->
+                        val firstFace = map.value.first()
+                        val lastFace = map.value.last()
 
-                    Face(map.key, firstFace.time, lastFace.time, map.value)
+                        Face(map.key, firstFace.time, lastFace.time, map.value)
+                    }
                 }
-            }
-            .subscribeOn(Schedulers.computation())
-            .observeOn(AndroidSchedulers.mainThread())
-            .doOnSubscribe {
-                showProgress()
-            }
-            .doFinally {
-                dismissProgress()
-            }
-            .subscribe({ results ->
-                faceView.setData(results)
-            }, {
-                it.printStackTrace()
-            })
-            .addToCompositeDisposable(compositeDisposable)
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnSubscribe {
+                    showProgress()
+                }
+                .doFinally {
+                    dismissProgress()
+                }
+                .subscribe({ results ->
+                    faceView.setData(results)
+                }, {
+                    it.printStackTrace()
+                })
+                .addToCompositeDisposable(compositeDisposable)
     }
 
     private fun initDetector() {
         try {
             detector = TensorFlowYoloDetector.create(
-                context?.assets,
-                Constant.YOLO_MODEL_FILE,
-                Constant.YOLO_INPUT_SIZE,
-                Constant.YOLO_BLOCK_SIZE)
+                    context?.assets,
+                    Constant.YOLO_MODEL_FILE,
+                    Constant.YOLO_INPUT_SIZE,
+                    Constant.YOLO_BLOCK_SIZE)
         } catch (e: IOException) {
             e.printStackTrace()
         }
@@ -339,9 +337,9 @@ class EditorFragment : Fragment() {
 
         val sensorOrientation = 90
         frameToCropTransform = ImageUtils.getTransformationMatrix(
-            previewWidth, previewHeight,
-            cropSize, cropSize,
-            sensorOrientation, true)
+                previewWidth, previewHeight,
+                cropSize, cropSize,
+                sensorOrientation, true)
 
         cropToFrameTransform = Matrix()
         frameToCropTransform?.invert(cropToFrameTransform)

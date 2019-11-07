@@ -15,29 +15,52 @@ import kotlin.math.min
  */
 object VideoUtils {
 
-    fun extractMetadata(context: Context?, uri: Uri, dstHeight: Float): VideoMetadata {
+//    fun extractMetadata(context: Context?, uri: Uri, dstHeight: Float): VideoMetadata {
+//        val retriever = MediaMetadataRetriever()
+//
+//        retriever.setDataSource(context, uri)
+//
+//        val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong()
+//
+//        val frames = ArrayList<Bitmap>()
+//        val frameCountNeed = (duration / 1000)
+//        val interval = duration.toFloat()  / frameCountNeed
+//
+//        for (i in 0 until frameCountNeed) {
+//            val bitmap = retriever.getFrameAtTime((i * interval * 1000).toLong(), MediaMetadataRetriever.OPTION_CLOSEST)
+//            frames.add(bitmap)
+//        }
+//
+//        val width = frames[0].width.toFloat()
+//        val height = frames[0].height.toFloat()
+//        val dstWidth = width * dstHeight / height
+//        val frame = VideoMetadata.Frame(dstWidth, dstHeight, frames)
+//
+//        return VideoMetadata(uri, duration, width, height, frame)
+//    }
+
+    fun extractMetadata(context: Context?, uri: Uri, frameHeight: Float): VideoMetadata {
         val retriever = MediaMetadataRetriever()
 
         retriever.setDataSource(context, uri)
 
         val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong()
+        val frameCount = (duration / 1000).toInt()
+        val interval = duration.toFloat() / frameCount
 
-        val frames = ArrayList<Bitmap>()
-        val frameCountNeed = (duration / 1000)
-        val interval = duration.toFloat()  / frameCountNeed
+        val bitmap = retriever.frameAtTime
+        val width = bitmap.width.toFloat()
+        val height = bitmap.height.toFloat()
+        bitmap.recycle()
 
-        for (i in 0 until frameCountNeed) {
-            val bitmap = retriever.getFrameAtTime((i * interval * 1000).toLong(), MediaMetadataRetriever.OPTION_CLOSEST)
-            frames.add(bitmap)
-        }
+        val frameWidth = width * frameHeight / height
+        val frame = VideoMetadata.Frame(frameWidth, frameHeight, frameCount, interval)
 
-        val width = frames[0].width.toFloat()
-        val height = frames[0].height.toFloat()
-        val dstWidth = width * dstHeight / height
-        val frame = VideoMetadata.Frame(dstWidth, dstHeight, frames)
+        retriever.release()
 
         return VideoMetadata(uri, duration, width, height, frame)
     }
+
 
     fun extractFrames(context: Context?, uri: Uri, frameCount: Int): ArrayList<Bitmap> {
         val retriever = MediaMetadataRetriever()
@@ -64,12 +87,12 @@ object VideoUtils {
         }
 
         val output = convertYUV420ToARGB8888(
-            cachedYuvBytes,
-            image.width, image.height, planes[0].rowStride, planes[1].rowStride, planes[1].pixelStride
+                cachedYuvBytes,
+                image.width, image.height, planes[0].rowStride, planes[1].rowStride, planes[1].pixelStride
         )
         return Bitmap.createBitmap(
-            Bitmap.createBitmap(output, image.width, image.height, Bitmap.Config.ARGB_8888),
-            0, 0, image.width, image.height, matrix, true
+                Bitmap.createBitmap(output, image.width, image.height, Bitmap.Config.ARGB_8888),
+                0, 0, image.width, image.height, matrix, true
         )
     }
 
@@ -98,7 +121,7 @@ object VideoUtils {
                 val nB = min(262143, max(0, nY + 2066 * nU)) shr 10 and 0xff
 
                 out[i++] =
-                    (0xff000000 or ((nR shl 16).toLong()) or ((nG shl 8).toLong()) or nB.toLong()).toInt()
+                        (0xff000000 or ((nR shl 16).toLong()) or ((nG shl 8).toLong()) or nB.toLong()).toInt()
             }
         }
         return out

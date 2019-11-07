@@ -45,7 +45,7 @@ class TimeLineView : RecyclerView {
     }
 
     fun setData(frame: VideoMetadata.Frame) {
-        frameAdapter.setData(frame.width, frame.height, frame.frames)
+        frameAdapter.setData(frame.width, frame.height, frame.items)
         setupScrollListener(frame)
     }
 
@@ -59,7 +59,7 @@ class TimeLineView : RecyclerView {
         setPadding(padding, 0, padding, 0)
 
         val xPivot = width.toFloat() / 2
-        val totalWidth = frame.width * frame.frames.size
+        val totalWidth = frame.width * frame.items.size
         scrollListener = TimeLineScrollListener(xPivot, frame.width, totalWidth, onProgressChanged, onScrollStateChanged)
         addOnScrollListener(scrollListener!!)
     }
