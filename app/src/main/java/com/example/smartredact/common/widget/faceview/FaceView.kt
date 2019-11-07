@@ -32,7 +32,7 @@ class FaceView : RecyclerView {
         adapter = faceAdapter
     }
 
-    fun setData() {
-
+    fun setData(results: List<Face>) {
+        faceAdapter.setData(results)
     }
 }

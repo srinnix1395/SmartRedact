@@ -8,6 +8,7 @@ import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.util.ArrayMap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,11 +16,13 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartredact.R
 import com.example.smartredact.common.facerecoginition.Classifier
+import com.example.smartredact.common.facerecoginition.Constant
 import com.example.smartredact.common.facerecoginition.TensorFlowYoloDetector
-import com.example.smartredact.common.facerecoginition.env.ImageUtils
+import com.example.smartredact.common.utils.ImageUtils
 import com.example.smartredact.common.utils.TimeUtils
 import com.example.smartredact.common.utils.VideoUtils
 import com.example.smartredact.common.utils.addToCompositeDisposable
+import com.example.smartredact.common.widget.faceview.Face
 import com.example.smartredact.data.model.VideoMetadata
 import com.example.smartredact.view.dialog.ProgressCommonDialog
 import com.google.android.exoplayer2.ExoPlayerFactory
@@ -46,12 +49,6 @@ class EditorFragment : Fragment() {
         const val REQUEST_CODE_SELECT_FILE = 1234
         const val FRAME_HEIGHT_FACTOR = 0.625F
         const val INTERVAL = 25L
-
-        const val YOLO_MODEL_FILE = "yolo2_face.tflite"
-        const val YOLO_INPUT_SIZE = 416
-        const val YOLO_BLOCK_SIZE = 32
-
-        const val MINIMUM_CONFIDENCE_YOLO = 0.25
     }
 
     private var player: SimpleExoPlayer? = null
@@ -181,8 +178,8 @@ class EditorFragment : Fragment() {
             }
             .subscribe({ videoMetadata ->
                 this.videoMetadata = videoMetadata
-                tvCurrentTime.text = TimeUtils.format(0L)
-                tvDuration.text = TimeUtils.format(videoMetadata.duration)
+                tvCurrentTime.text = TimeUtils.format(0L, true)
+                tvDuration.text = TimeUtils.format(videoMetadata.duration, true)
                 timeLineView.setData(videoMetadata.frame)
             }, {
                 it.printStackTrace()
@@ -205,7 +202,7 @@ class EditorFragment : Fragment() {
         }
 
         val currentTime = ((progress * videoMetadata!!.duration) / total).toLong()
-        tvCurrentTime.text = TimeUtils.format(currentTime)
+        tvCurrentTime.text = TimeUtils.format(currentTime, true)
         if (enabledSeek) {
             player?.seekTo(currentTime)
         }
@@ -253,29 +250,42 @@ class EditorFragment : Fragment() {
         Single
             .fromCallable {
                 val frames = VideoUtils.extractFrames(context, videoMetadata!!.uri, videoMetadata!!.frame.frames.size)
-                val results = arrayListOf<Classifier.Recognition>()
+                val mappedRecognitions = ArrayMap<String, ArrayList<Classifier.Recognition>>()
 
-                frames.forEach {
+                frames.forEachIndexed { index, bitmap ->
                     Canvas(croppedBitmap!!).apply {
-                        drawBitmap(it, frameToCropTransform!!, null)
+                        drawBitmap(bitmap, frameToCropTransform!!, null)
                     }
-                    detector?.recognizeImage(croppedBitmap)?.let {
-                        results.addAll(it)
+                    detector?.recognizeImage(croppedBitmap)?.let { listRecognitions ->
+                        listRecognitions.forEach {
+                            val location = it.location
+                            if (location != null && it.confidence >= Constant.MINIMUM_CONFIDENCE_YOLO) {
+                                cropToFrameTransform?.mapRect(location)
+                                it.location = location
+
+                                it.time = index.toLong()
+
+                                val list = mappedRecognitions[it.id]
+                                if (list == null) {
+                                    mappedRecognitions[it.id] = arrayListOf(it)
+                                } else {
+                                    list.add(it)
+                                }
+                            }
+                        }
                     }
                 }
 
-                val mappedRecognitions = arrayListOf<Classifier.Recognition>()
-
-                for (result in results         ) {
-                    val location = result.location
-                    if (location != null && result.confidence >= MINIMUM_CONFIDENCE_YOLO) {
-                        cropToFrameTransform?.mapRect(location)
-                        result.location = location
-                        mappedRecognitions.add(result)
-                    }
+                mappedRecognitions.values.forEach { value ->
+                    value?.sortBy { it.time }
                 }
 
-                return@fromCallable mappedRecognitions
+                return@fromCallable mappedRecognitions.map { map ->
+                    val firstFace = map.value.first()
+                    val lastFace = map.value.last()
+
+                    Face(map.key, firstFace.time, lastFace.time, map.value)
+                }
             }
             .subscribeOn(Schedulers.computation())
             .observeOn(AndroidSchedulers.mainThread())
@@ -286,7 +296,7 @@ class EditorFragment : Fragment() {
                 dismissProgress()
             }
             .subscribe({ results ->
-                println(results.size)
+                faceView.setData(results)
             }, {
                 it.printStackTrace()
             })
@@ -297,16 +307,16 @@ class EditorFragment : Fragment() {
         try {
             detector = TensorFlowYoloDetector.create(
                 context?.assets,
-                YOLO_MODEL_FILE,
-                YOLO_INPUT_SIZE,
-                YOLO_BLOCK_SIZE)
+                Constant.YOLO_MODEL_FILE,
+                Constant.YOLO_INPUT_SIZE,
+                Constant.YOLO_BLOCK_SIZE)
         } catch (e: IOException) {
             e.printStackTrace()
         }
 
         val previewWidth = videoMetadata!!.width.toInt()
         val previewHeight = videoMetadata!!.height.toInt()
-        val cropSize = YOLO_INPUT_SIZE
+        val cropSize = Constant.YOLO_INPUT_SIZE
         croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Bitmap.Config.ARGB_8888)
 
         val sensorOrientation = 90

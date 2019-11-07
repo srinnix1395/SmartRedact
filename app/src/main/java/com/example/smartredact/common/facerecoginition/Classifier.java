@@ -49,8 +49,9 @@ public interface Classifier {
          */
         private RectF location;
 
-        public Recognition(
-                final String id, final String title, final Float confidence, final RectF location) {
+        private long time;
+
+        public Recognition(String id, String title, Float confidence, RectF location) {
             this.id = id;
             this.title = title;
             this.confidence = confidence;
@@ -75,6 +76,14 @@ public interface Classifier {
 
         public void setLocation(RectF location) {
             this.location = location;
+        }
+
+        public void setTime(long time) {
+            this.time = time;
+        }
+
+        public long getTime() {
+            return time;
         }
 
         @Override

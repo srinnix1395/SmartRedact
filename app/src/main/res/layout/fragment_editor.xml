@@ -24,6 +24,7 @@
             android:id="@+id/imvDetectFace"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="?android:attr/selectableItemBackground"
             android:scaleType="center"
             android:src="@drawable/ic_face_recognition" />
 
@@ -36,6 +37,7 @@
             android:id="@+id/imvSetting"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="?android:attr/selectableItemBackground"
             android:scaleType="center"
             android:src="@drawable/ic_setting" />
 
@@ -67,6 +69,7 @@
                 android:id="@+id/imvPlayPause"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="?android:attr/selectableItemBackground"
                 android:scaleType="center"
                 android:src="@drawable/ic_play" />
 
@@ -79,6 +82,7 @@
                 android:id="@+id/imvNextFrame"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="?android:attr/selectableItemBackground"
                 android:scaleType="center"
                 android:src="@drawable/ic_skip_forward" />
 
@@ -91,6 +95,7 @@
                 android:id="@+id/imvPrevFrame"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="?android:attr/selectableItemBackground"
                 android:scaleType="center"
                 android:src="@drawable/ic_skip_backward" />
 
@@ -115,7 +120,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.75" />
+        app:layout_constraintGuide_percent="0.7" />
 
     <com.google.android.exoplayer2.ui.SimpleExoPlayerView
         android:id="@+id/playerControlView"
@@ -129,6 +134,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:resize_mode="fit"
         app:use_controller="false" />
+
 
     <RelativeLayout
         android:layout_width="0dp"

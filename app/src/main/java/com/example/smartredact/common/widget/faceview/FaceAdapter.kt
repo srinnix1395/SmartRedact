@@ -2,40 +2,52 @@ package com.example.smartredact.common.widget.faceview;
 
 import android.content.Context
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
 import com.example.smartredact.R
+import com.example.smartredact.common.widget.expandablerecyclerview.CommonExpandableAdapter
 
 /**
  * Created by TuHA on 11/6/2019.
  */
 class FaceAdapter(context: Context?,
-                  private val listItems: ArrayList<Any>,
-                  private val interactor: Interactor?) : RecyclerView.Adapter<FaceViewHolder>() {
+                  private val listItems: ArrayList<Face>,
+                  private val interactor: Interactor?) : CommonExpandableAdapter<FaceHeaderViewHolder, FaceChildViewHolder>() {
 
     private val layoutInflater: LayoutInflater = LayoutInflater.from(context)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FaceViewHolder {
-        val view: View = layoutInflater.inflate(R.layout.item_face, parent, false)
-        return FaceViewHolder(view, interactor)
+    override fun getHeaderViewHolder(parent: ViewGroup, headerType: Int): FaceHeaderViewHolder {
+        val view = layoutInflater.inflate(R.layout.item_header_face, parent, false)
+        return FaceHeaderViewHolder(view, interactor)
     }
 
-    override fun onBindViewHolder(holder: FaceViewHolder, position: Int) {
-        holder.bindData(listItems[position])
+    override fun getChildViewHolder(parent: ViewGroup, childType: Int): FaceChildViewHolder {
+        val view = layoutInflater.inflate(R.layout.item_child_face, parent, false)
+        return FaceChildViewHolder(view, interactor)
     }
 
-    override fun getItemCount(): Int {
+    override fun getHeaderCount(): Int {
         return listItems.size
     }
 
-    fun setData(listItems: List<Any>) {
+    override fun getChildCount(header: Int): Int {
+        return listItems[header].face.size
+    }
+
+    override fun onBindHeaderViewHolder(headerHolder: FaceHeaderViewHolder, headerIndex: Int, headerType: Int) {
+        headerHolder.bindData(listItems[headerIndex])
+    }
+
+    override fun onBindChildViewHolder(childHolder: FaceChildViewHolder, headerIndex: Int, childIndex: Int, childType: Int) {
+        childHolder.bindData(listItems[headerIndex].face[childIndex])
+    }
+
+    fun setData(listItems: List<Face>) {
         this.listItems.clear()
         this.listItems.addAll(listItems)
         notifyDataSetChanged()
     }
 
-    fun addAll(index: Int = this.listItems.size, listItems: List<Any>) {
+    fun addAll(index: Int = this.listItems.size, listItems: List<Face>) {
         this.listItems.addAll(index, listItems)
         notifyItemRangeInserted(index, listItems.size)
     }
