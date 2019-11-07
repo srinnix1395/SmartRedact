@@ -111,9 +111,14 @@ class EditorFragment : Fragment() {
         imvDetectFace.setOnClickListener {
             detectFaces()
         }
-
         imvPlayPause.setOnClickListener {
             playOrPause()
+        }
+        imvNextFrame.setOnClickListener {
+            seekToNextFrame()
+        }
+        imvPrevFrame.setOnClickListener {
+            seekToPreviousFrame()
         }
 //        arguments?.getString(Constants.BUNDLE).let {
 //            showVideo(Uri.parse(it))
@@ -223,6 +228,14 @@ class EditorFragment : Fragment() {
 
     private fun stopPlayer() {
         player?.playWhenReady = false
+    }
+
+    private fun seekToNextFrame() {
+
+    }
+
+    private fun seekToPreviousFrame() {
+
     }
 
     private fun updateSeekBar() {

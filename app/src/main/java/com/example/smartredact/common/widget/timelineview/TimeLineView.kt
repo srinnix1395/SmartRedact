@@ -45,7 +45,7 @@ class TimeLineView : RecyclerView {
     }
 
     fun setData(frame: VideoMetadata.Frame) {
-        frameAdapter.setData(frame.frames)
+        frameAdapter.setData(frame.width, frame.height, frame.frames)
         setupScrollListener(frame)
     }
 

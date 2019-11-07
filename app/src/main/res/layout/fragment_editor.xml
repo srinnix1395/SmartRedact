@@ -20,10 +20,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.example.smartredact.common.widget.SquareImageView
+        <ImageView
             android:id="@+id/imvExtract"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:background="?android:attr/selectableItemBackground"
             android:scaleType="center"
             android:src="@drawable/ic_export" />
@@ -33,10 +34,11 @@
             android:layout_height="0.5dp"
             android:background="@color/color_editor_dark" />
 
-        <com.example.smartredact.common.widget.SquareImageView
+        <ImageView
             android:id="@+id/imvDetectFace"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:background="?android:attr/selectableItemBackground"
             android:scaleType="center"
             android:src="@drawable/ic_face_recognition" />
@@ -46,23 +48,39 @@
             android:layout_height="0.5dp"
             android:background="@color/color_editor_dark" />
 
-        <com.example.smartredact.common.widget.SquareImageView
-            android:id="@+id/imvPlayPause"
+        <ImageView
+            android:id="@+id/imvNotification"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:background="?android:attr/selectableItemBackground"
             android:scaleType="center"
-            android:src="@drawable/ic_play" />
+            android:src="@drawable/ic_notification" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="0.5dp"
             android:background="@color/color_editor_dark" />
 
-        <com.example.smartredact.common.widget.SquareImageView
+        <ImageView
+            android:id="@+id/imvSetting"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="center"
+            android:src="@drawable/ic_setting" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:background="@color/color_editor_dark" />
+
+        <ImageView
             android:id="@+id/imvNextFrame"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:background="?android:attr/selectableItemBackground"
             android:scaleType="center"
             android:src="@drawable/ic_skip_forward" />
@@ -72,10 +90,11 @@
             android:layout_height="0.5dp"
             android:background="@color/color_editor_dark" />
 
-        <com.example.smartredact.common.widget.SquareImageView
+        <ImageView
             android:id="@+id/imvPrevFrame"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:background="?android:attr/selectableItemBackground"
             android:scaleType="center"
             android:src="@drawable/ic_skip_backward" />
@@ -85,18 +104,15 @@
             android:layout_height="0.5dp"
             android:background="@color/color_editor_dark" />
 
-        <com.example.smartredact.common.widget.SquareImageView
-            android:id="@+id/imvSetting"
+        <ImageView
+            android:id="@+id/imvPlayPause"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:background="?android:attr/selectableItemBackground"
             android:scaleType="center"
-            android:src="@drawable/ic_setting" />
+            android:src="@drawable/ic_play" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:background="@color/color_editor_dark" />
     </LinearLayout>
 
     <androidx.constraintlayout.widget.Guideline
@@ -128,6 +144,7 @@
 
 
     <RelativeLayout
+        android:id="@+id/layoutVideo"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="@dimen/padding_editor"

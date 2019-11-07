@@ -9,7 +9,7 @@ import com.bumptech.glide.Glide
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_frame.*
 
-open class FrameViewHolder(override val containerView: View,
+abstract class FrameViewHolder(override val containerView: View,
                            interactor: FrameAdapter.Interactor?) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 
     companion object {
@@ -23,11 +23,12 @@ open class FrameViewHolder(override val containerView: View,
         }
     }
 
-    fun bindData(bitmap: Bitmap) {
+    fun bindData(bitmap: Bitmap, frameWidth: Float, frameHeight: Float) {
         Glide
-                .with(containerView)
-                .load(bitmap)
-                .into(imvFrame)
+            .with(containerView)
+            .load(bitmap)
+            .override(frameWidth.toInt(), frameHeight.toInt())
+            .into(imvFrame)
     }
 
     class FirstItem(containerView: View,
@@ -36,11 +37,22 @@ open class FrameViewHolder(override val containerView: View,
         init {
             imvFrame.outlineProvider = object : ViewOutlineProvider() {
                 override fun getOutline(view: View?, outline: Outline?) {
-                    outline?.setRoundRect(0, 0, (view!!.width + DEFAULT_RADIUS).toInt(), view.height, DEFAULT_RADIUS)
+                    outline?.setRoundRect(
+                        0,
+                        0,
+                        (view!!.width + DEFAULT_RADIUS).toInt(),
+                        view.height,
+                        DEFAULT_RADIUS
+                    )
                 }
             }
             imvFrame.clipToOutline = true
         }
+    }
+
+    class MiddleItem(containerView: View,
+                     interactor: FrameAdapter.Interactor?) : FrameViewHolder(containerView, interactor) {
+
     }
 
     class LastItem(containerView: View,
@@ -49,7 +61,13 @@ open class FrameViewHolder(override val containerView: View,
         init {
             imvFrame.outlineProvider = object : ViewOutlineProvider() {
                 override fun getOutline(view: View?, outline: Outline?) {
-                    outline?.setRoundRect((0 - DEFAULT_RADIUS).toInt(), 0, view!!.width, view.height, DEFAULT_RADIUS)
+                    outline?.setRoundRect(
+                        (0 - DEFAULT_RADIUS).toInt(),
+                        0,
+                        view!!.width,
+                        view.height,
+                        DEFAULT_RADIUS
+                    )
                 }
             }
             imvFrame.clipToOutline = true

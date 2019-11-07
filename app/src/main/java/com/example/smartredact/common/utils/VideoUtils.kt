@@ -21,16 +21,19 @@ object VideoUtils {
         retriever.setDataSource(context, uri)
 
         val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong()
-        val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH).toFloat()
-        val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT).toFloat()
 
         val frames = ArrayList<Bitmap>()
         val frameCountNeed = (duration / 1000)
-        val dstWidth = width * dstHeight / height
+        val interval = duration.toFloat()  / frameCountNeed
+
         for (i in 0 until frameCountNeed) {
-            val bitmap = retriever.getScaledFrameAtTime(i * 1000000L, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, dstWidth.toInt(), dstHeight.toInt())
+            val bitmap = retriever.getFrameAtTime((i * interval * 1000).toLong(), MediaMetadataRetriever.OPTION_CLOSEST)
             frames.add(bitmap)
         }
+
+        val width = frames[0].width.toFloat()
+        val height = frames[0].height.toFloat()
+        val dstWidth = width * dstHeight / height
         val frame = VideoMetadata.Frame(dstWidth, dstHeight, frames)
 
         return VideoMetadata(uri, duration, width, height, frame)

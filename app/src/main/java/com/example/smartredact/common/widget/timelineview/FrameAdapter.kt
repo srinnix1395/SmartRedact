@@ -20,6 +20,8 @@ class FrameAdapter(context: Context?,
     }
 
     private val layoutInflater: LayoutInflater = LayoutInflater.from(context)
+    private var frameWidth: Float = 0F
+    private var frameHeight: Float = 0F
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FrameViewHolder {
         val view: View = layoutInflater.inflate(R.layout.item_frame, parent, false)
@@ -27,12 +29,12 @@ class FrameAdapter(context: Context?,
         return when (viewType) {
             FIRST_ITEM -> FrameViewHolder.FirstItem(view, interactor)
             LAST_ITEM -> FrameViewHolder.LastItem(view, interactor)
-            else -> FrameViewHolder(view, interactor)
+            else -> FrameViewHolder.MiddleItem(view, interactor)
         }
     }
 
     override fun onBindViewHolder(holder: FrameViewHolder, position: Int) {
-        holder.bindData(listItems[position])
+        holder.bindData(listItems[position], frameWidth, frameHeight)
     }
 
     override fun getItemCount(): Int {
@@ -47,7 +49,10 @@ class FrameAdapter(context: Context?,
         }
     }
 
-    fun setData(listItems: List<Bitmap>) {
+    fun setData(frameWidth: Float, frameHeight: Float, listItems: List<Bitmap>) {
+        this.frameWidth = frameWidth
+        this.frameHeight = frameHeight
+
         this.listItems.clear()
         this.listItems.addAll(listItems)
         notifyDataSetChanged()
