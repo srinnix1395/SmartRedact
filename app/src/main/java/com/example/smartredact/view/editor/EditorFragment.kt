@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -36,6 +35,7 @@ class EditorFragment : Fragment() {
         const val REQUEST_CODE_SELECT_FILE = 1234
         const val FRAME_HEIGHT_FACTOR = 0.625F
         const val INTERVAL = 25L
+        const val APPROXIMATION = 20
     }
 
     private var player: SimpleExoPlayer? = null
@@ -48,7 +48,11 @@ class EditorFragment : Fragment() {
         return@lazy ProgressCommonDialog(context)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_editor, container, false)
     }
 
@@ -76,7 +80,7 @@ class EditorFragment : Fragment() {
         })
         playerControlView.player = player
 
-        timeLineView.setOnProgressChanged{progress, total ->
+        timeLineView.setOnProgressChanged { progress, total ->
             calculateTextCurrentTime(progress, total, true)
         }
 
@@ -112,8 +116,8 @@ class EditorFragment : Fragment() {
             intent.type = "video/*"
             intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
             startActivityForResult(
-                    Intent.createChooser(intent, "Choose a file"),
-                    REQUEST_CODE_SELECT_FILE
+                Intent.createChooser(intent, "Choose a file"),
+                REQUEST_CODE_SELECT_FILE
             )
         }
 
@@ -121,36 +125,37 @@ class EditorFragment : Fragment() {
     }
 
     private fun showVideo(data: Uri) {
-        val dataSourceFactory = DefaultDataSourceFactory(context, getUserAgent(context, "SmartRedact"))
+        val dataSourceFactory =
+            DefaultDataSourceFactory(context, getUserAgent(context, "SmartRedact"))
         val videoSource = ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(data)
         player?.prepare(videoSource, true, false)
     }
 
     private fun processVideo(data: Uri) {
         Single
-                .fromCallable {
-                    return@fromCallable VideoUtils.extractFrames(
-                            context,
-                            data,
-                            265f
-                    )
-                }
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnSubscribe {
-                    showProgress()
-                }
-                .doFinally {
-                    dismissProgress()
-                }
-                .subscribe({ videoMetadata ->
-                    this.videoMetadata = videoMetadata
-                    tvCurrentTime.text = TimeUtils.format(0L)
-                    tvDuration.text = TimeUtils.format(videoMetadata.duration)
-                    timeLineView.setData(videoMetadata.frame)
-                }, {
-                    it.printStackTrace()
-                })
+            .fromCallable {
+                return@fromCallable VideoUtils.extractFrames(
+                    context,
+                    data,
+                    265f
+                )
+            }
+            .subscribeOn(Schedulers.computation())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnSubscribe {
+                showProgress()
+            }
+            .doFinally {
+                dismissProgress()
+            }
+            .subscribe({ videoMetadata ->
+                this.videoMetadata = videoMetadata
+                tvCurrentTime.text = TimeUtils.format(0L)
+                tvDuration.text = TimeUtils.format(videoMetadata.duration)
+                timeLineView.setData(videoMetadata.frame)
+            }, {
+                it.printStackTrace()
+            })
     }
 
     private fun releasePlayer() {
@@ -171,7 +176,11 @@ class EditorFragment : Fragment() {
         }
 
         val currentTime = (progress * videoMetadata!!.duration / total).toLong()
-        tvCurrentTime.text = TimeUtils.format(currentTime)
+        tvCurrentTime.text = if (Math.abs(currentTime - videoMetadata!!.duration) < APPROXIMATION) {
+            TimeUtils.format(videoMetadata!!.duration)
+        } else {
+            TimeUtils.format(currentTime)
+        }
         if (enabledSeek) {
             player?.seekTo(currentTime)
         }
@@ -191,9 +200,17 @@ class EditorFragment : Fragment() {
         val progressX = (progressTime * totalWidth) / videoMetadata!!.duration
         val position = (progressX / videoMetadata!!.frame.width).toInt()
         val offset = (progressX % videoMetadata!!.frame.width)
-        Log.d("kiennt", "$progressTime   $totalWidth   $progressX     ${videoMetadata!!.frame.width}      ${videoMetadata!!.frame.frames.size}")
-        timeLineView.scrollToPositionWithOffset(position, -offset.toInt())
-        calculateTextCurrentTime(progressX, totalWidth, false)
+
+        if (Math.abs((progressX * videoMetadata!!.duration / totalWidth) - videoMetadata!!.duration) < APPROXIMATION) {
+            timeLineView.scrollToPositionWithOffset(
+                videoMetadata!!.frame.frames.size - 1,
+                -videoMetadata!!.frame.width.toInt()
+            )
+            tvCurrentTime.text = TimeUtils.format(videoMetadata!!.duration)
+        } else {
+            timeLineView.scrollToPositionWithOffset(position, -offset.toInt())
+            calculateTextCurrentTime(progressX, totalWidth, false)
+        }
     }
 
     private fun showProgress() {

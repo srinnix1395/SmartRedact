@@ -18,9 +18,7 @@ class TimeLineScrollListener(private val xPivot: Float,
         val view = recyclerView.findChildViewUnder(xPivot, 0F) ?: return
         val viewHolder = recyclerView.findContainingViewHolder(view) ?: return
         val currentPosition = viewHolder.adapterPosition
-        val progress = currentPosition * frameWidth + Math.abs(view.x - xPivot)
-
-        println("kami " + (view.x - xPivot))
+        val progress = currentPosition * frameWidth + Math.abs(view.x - xPivot.toInt())
         onProgressChanged?.invoke(progress, total)
     }
 

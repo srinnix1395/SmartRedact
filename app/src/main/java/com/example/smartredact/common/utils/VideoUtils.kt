@@ -2,16 +2,10 @@ package com.example.smartredact.common.utils
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import androidx.core.graphics.scale
 import com.example.smartredact.data.model.VideoMetadata
-import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.math.roundToInt
-import kotlin.math.roundToLong
 
 /**
  * Created by TuHA on 10/31/2019.
