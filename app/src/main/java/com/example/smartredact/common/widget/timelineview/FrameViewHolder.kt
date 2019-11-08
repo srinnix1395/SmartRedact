@@ -10,12 +10,14 @@ import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_frame.*
 
 abstract class FrameViewHolder(override val containerView: View,
-                           interactor: FrameAdapter.Interactor?) : RecyclerView.ViewHolder(containerView), LayoutContainer {
+                               interactor: FrameAdapter.Interactor?) : RecyclerView.ViewHolder(containerView), LayoutContainer {
 
     companion object {
 
         const val DEFAULT_RADIUS = 15F
     }
+
+    private var setSize = false
 
     init {
         itemView.setOnClickListener {
@@ -23,11 +25,27 @@ abstract class FrameViewHolder(override val containerView: View,
         }
     }
 
-    fun bindData(bitmap: Bitmap, frameWidth: Float, frameHeight: Float) {
+
+    fun bindData(bitmap: Bitmap?, frameWidth: Float, frameHeight: Float) {
+        setSize(frameWidth, frameHeight)
+        bindImage(bitmap)
+    }
+
+    private fun setSize(frameWidth: Float, frameHeight: Float) {
+        if (setSize) {
+            return
+        }
+
+        val layoutParams = RecyclerView.LayoutParams(frameWidth.toInt(), frameHeight.toInt())
+        containerView.layoutParams = layoutParams
+
+        setSize = true
+    }
+
+    private fun bindImage(bitmap: Bitmap?) {
         Glide
             .with(containerView)
             .load(bitmap)
-            .override(frameWidth.toInt(), frameHeight.toInt())
             .into(imvFrame)
     }
 

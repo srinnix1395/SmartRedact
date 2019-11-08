@@ -48,13 +48,12 @@ object VideoUtils {
         val frameCount = (duration / 1000).toInt()
         val interval = duration.toFloat() / frameCount
 
-        val bitmap = retriever.frameAtTime
+        val bitmap = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST)
         val width = bitmap.width.toFloat()
         val height = bitmap.height.toFloat()
-        bitmap.recycle()
 
         val frameWidth = width * frameHeight / height
-        val frame = VideoMetadata.Frame(frameWidth, frameHeight, frameCount, interval)
+        val frame = VideoMetadata.Frame(frameWidth, frameHeight, frameCount, interval, bitmap)
 
         retriever.release()
 
@@ -62,16 +61,18 @@ object VideoUtils {
     }
 
 
-    fun extractFrames(context: Context?, uri: Uri, frameCount: Int): ArrayList<Bitmap> {
+    fun extractFrames(context: Context?, uri: Uri, frameCount: Int, interval: Float): ArrayList<Bitmap> {
         val retriever = MediaMetadataRetriever()
         val frames = arrayListOf<Bitmap>()
 
         retriever.setDataSource(context, uri)
 
-        for (i in 0 until frameCount) {
-            val bitmap = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST)
+        for (i in 1 until frameCount) {
+            val bitmap = retriever.getFrameAtTime((i * interval).toLong(), MediaMetadataRetriever.OPTION_CLOSEST)
             frames.add(bitmap)
         }
+
+        retriever.release()
 
         return frames
     }

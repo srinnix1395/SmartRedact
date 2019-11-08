@@ -7,10 +7,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartredact.R
-import java.util.*
+import com.example.smartredact.data.model.VideoMetadata
 
 class FrameAdapter(context: Context?,
-                   private val listItems: ArrayList<Bitmap>,
+                   private val listItems: ArrayList<Bitmap?>,
                    private val interactor: Interactor?) : RecyclerView.Adapter<FrameViewHolder>() {
 
     companion object {
@@ -49,12 +49,14 @@ class FrameAdapter(context: Context?,
         }
     }
 
-    fun setData(frameWidth: Float, frameHeight: Float, listItems: List<Bitmap>) {
-        this.frameWidth = frameWidth
-        this.frameHeight = frameHeight
+    fun setData(frame: VideoMetadata.Frame) {
+        this.frameWidth = frame.width
+        this.frameHeight = frame.height
 
-        this.listItems.clear()
-        this.listItems.addAll(listItems)
+        this.listItems.add(frame.firstItem)
+        for (i in 1 until frame.count) {
+            this.listItems.add(null)
+        }
         notifyDataSetChanged()
     }
 

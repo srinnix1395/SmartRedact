@@ -21,7 +21,6 @@ class TimeLineScrollListener(private val xPivot: Float,
         val currentPosition = viewHolder.adapterPosition
         val progress = currentPosition * frameWidth + Math.abs(view.x - xPivot)
 
-        println("kami " + (view.x - xPivot))
         onProgressChanged?.invoke(progress, total)
     }
 

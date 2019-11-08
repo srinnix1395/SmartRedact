@@ -3,12 +3,10 @@ package com.example.smartredact.view.editor
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.ArrayMap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,7 +20,6 @@ import com.example.smartredact.common.utils.ImageUtils
 import com.example.smartredact.common.utils.TimeUtils
 import com.example.smartredact.common.utils.VideoUtils
 import com.example.smartredact.common.utils.addToCompositeDisposable
-import com.example.smartredact.common.widget.faceview.Face
 import com.example.smartredact.data.model.VideoMetadata
 import com.example.smartredact.view.dialog.ProgressCommonDialog
 import com.google.android.exoplayer2.ExoPlayerFactory
@@ -33,7 +30,6 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util.getUserAgent
 import io.reactivex.Observable
-import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -49,14 +45,14 @@ class EditorFragment : Fragment() {
     companion object {
         const val REQUEST_CODE_SELECT_FILE = 1234
         const val FRAME_HEIGHT_FACTOR = 0.625F
-        const val INTERVAL = 25L
+        const val INTERVAL = 30L
     }
 
     private var player: SimpleExoPlayer? = null
     private var videoMetadata: VideoMetadata? = null
 
-    private var updateSeekBarHandler: Handler = Handler()
-    private val updateSeekBarRunnable: UpdateSeekBarRunnable = UpdateSeekBarRunnable()
+    private var updateTimeLineBarHandler: Handler = Handler()
+    private val updateTimeLineRunnable: UpdateSeekBarRunnable = UpdateSeekBarRunnable()
 
     private var detector: Classifier? = null
     private var croppedBitmap: Bitmap? = null
@@ -85,12 +81,12 @@ class EditorFragment : Fragment() {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 if (isPlaying) {
                     timeLineView.setEnabledScrollToUpdate(false)
-                    updateSeekBarHandler.post(updateSeekBarRunnable)
+                    startUpdateTimeLineView()
                     imvPlayPause.setImageResource(R.drawable.ic_pause)
                 } else {
-                    stopPlayer()
+                    pausePlayer()
                     timeLineView.setEnabledScrollToUpdate(true)
-                    updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+                    stopUpdateTimeLineView()
                     imvPlayPause.setImageResource(R.drawable.ic_play)
                     updateSeekBar()
                 }
@@ -104,7 +100,7 @@ class EditorFragment : Fragment() {
             }
             setOnScrollStateChanged { state ->
                 if (state == RecyclerView.SCROLL_STATE_DRAGGING && player?.isPlaying == true) {
-                    stopPlayer()
+                    pausePlayer()
                 }
             }
         }
@@ -156,8 +152,8 @@ class EditorFragment : Fragment() {
             intent.type = "video/*"
             intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
             startActivityForResult(
-                    Intent.createChooser(intent, "Choose a file"),
-                    REQUEST_CODE_SELECT_FILE
+                Intent.createChooser(intent, "Choose a file"),
+                REQUEST_CODE_SELECT_FILE
             )
         }
 
@@ -172,27 +168,26 @@ class EditorFragment : Fragment() {
 
     private fun processVideo(data: Uri) {
         Observable
-                .fromCallable {
-                    return@fromCallable VideoUtils.extractMetadata(context, data, timeLineView.height * FRAME_HEIGHT_FACTOR)
-                }
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
-
-                .doOnSubscribe {
-                    showProgress()
-                }
-                .doFinally {
-                    dismissProgress()
-                }
-                .subscribe({ videoMetadata ->
-                    this.videoMetadata = videoMetadata
-                    tvCurrentTime.text = TimeUtils.format(0L, true)
-                    tvDuration.text = TimeUtils.format(videoMetadata.duration, true)
-                    timeLineView.setData(videoMetadata.frame)
-                }, {
-                    it.printStackTrace()
-                })
-                .addToCompositeDisposable(compositeDisposable)
+            .fromCallable {
+                return@fromCallable VideoUtils.extractMetadata(context, data, timeLineView.height * FRAME_HEIGHT_FACTOR)
+            }
+            .subscribeOn(Schedulers.computation())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnSubscribe {
+                showProgress()
+            }
+            .doFinally {
+                dismissProgress()
+            }
+            .subscribe({ videoMetadata ->
+                this.videoMetadata = videoMetadata
+                tvCurrentTime.text = TimeUtils.format(0L, true)
+                tvDuration.text = TimeUtils.format(videoMetadata.duration, true)
+                timeLineView.setData(videoMetadata.frame)
+            }, {
+                it.printStackTrace()
+            })
+            .addToCompositeDisposable(compositeDisposable)
     }
 
     private fun releasePlayer() {
@@ -209,7 +204,11 @@ class EditorFragment : Fragment() {
             return
         }
 
-        val currentTime = ((progress * videoMetadata!!.duration) / total).toLong()
+        val currentTime = if (Math.abs(progress - total) <= 2) {
+            videoMetadata!!.duration
+        } else {
+            ((progress * videoMetadata!!.duration) / total).toLong()
+        }
         tvCurrentTime.text = TimeUtils.format(currentTime, true)
         if (enabledSeek) {
             player?.seekTo(currentTime)
@@ -217,33 +216,44 @@ class EditorFragment : Fragment() {
     }
 
     private fun playOrPause() {
-        if (videoMetadata == null || player == null || player!!.playbackState != Player.STATE_READY) {
+        if (videoMetadata == null || player == null) {
             return
         }
 
-        player?.playWhenReady = !player!!.isPlaying
+        if (player!!.isPlaying) {
+            pausePlayer()
+        } else {
+            if (player!!.playbackState == Player.STATE_ENDED) {
+                player!!.seekTo(0)
+            }
+            playPlayer()
+        }
     }
 
-    private fun stopPlayer() {
+    private fun playPlayer() {
+        player?.playWhenReady = true
+    }
+
+    private fun pausePlayer() {
         player?.playWhenReady = false
     }
 
     private fun seekToNextFrame() {
+        if (videoMetadata == null || player == null) {
+            return
+        }
 
+        val currentPosition = player!!.currentPosition
+        player!!.seekTo(currentPosition + 1000)
     }
 
     private fun seekToPreviousFrame() {
+        if (videoMetadata == null || player == null) {
+            return
+        }
 
-    }
-
-    private fun updateSeekBar() {
-        val progressTime = player!!.currentPosition
-        val totalWidth = videoMetadata!!.frame.width * videoMetadata!!.frame.frames.size
-        val progressX = (progressTime * totalWidth) / videoMetadata!!.duration
-        val position = (progressX / videoMetadata!!.frame.width).toInt()
-        val offset = (progressX % videoMetadata!!.frame.width).toInt()
-        timeLineView.scrollToPositionWithOffset(position, -offset)
-        calculateTextCurrentTime(progressX, totalWidth, false)
+        val currentPosition = player!!.currentPosition
+        player!!.seekTo(currentPosition - 1000)
     }
 
     private fun showProgress() {
@@ -255,77 +265,77 @@ class EditorFragment : Fragment() {
     }
 
     private fun detectFaces() {
-        if (videoMetadata == null) {
-            return
-        }
-
-        if (detector == null) {
-            initDetector()
-        }
-
-        Single
-                .fromCallable {
-                    val frames = VideoUtils.extractFrames(context, videoMetadata!!.uri, videoMetadata!!.frame.frames.size)
-                    val mappedRecognitions = ArrayMap<String, ArrayList<Classifier.Recognition>>()
-
-                    frames.forEachIndexed { index, bitmap ->
-                        Canvas(croppedBitmap!!).apply {
-                            drawBitmap(bitmap, frameToCropTransform!!, null)
-                        }
-                        detector?.recognizeImage(croppedBitmap)?.let { listRecognitions ->
-                            listRecognitions.forEach {
-                                val location = it.location
-                                if (location != null && it.confidence >= Constant.MINIMUM_CONFIDENCE_YOLO) {
-                                    cropToFrameTransform?.mapRect(location)
-                                    it.location = location
-
-                                    it.time = index.toLong()
-
-                                    val list = mappedRecognitions[it.id]
-                                    if (list == null) {
-                                        mappedRecognitions[it.id] = arrayListOf(it)
-                                    } else {
-                                        list.add(it)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    mappedRecognitions.values.forEach { value ->
-                        value?.sortBy { it.time }
-                    }
-
-                    return@fromCallable mappedRecognitions.map { map ->
-                        val firstFace = map.value.first()
-                        val lastFace = map.value.last()
-
-                        Face(map.key, firstFace.time, lastFace.time, map.value)
-                    }
-                }
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnSubscribe {
-                    showProgress()
-                }
-                .doFinally {
-                    dismissProgress()
-                }
-                .subscribe({ results ->
-                    faceView.setData(results)
-                }, {
-                    it.printStackTrace()
-                })
-                .addToCompositeDisposable(compositeDisposable)
+//        if (videoMetadata == null) {
+//            return
+//        }
+//
+//        if (detector == null) {
+//            initDetector()
+//        }
+//
+//        Single
+//                .fromCallable {
+//                    val frames = VideoUtils.extractFrames(context, videoMetadata!!.uri, videoMetadata!!.frame.count)
+//                    val mappedRecognitions = ArrayMap<String, ArrayList<Classifier.Recognition>>()
+//
+//                    frames.forEachIndexed { index, bitmap ->
+//                        Canvas(croppedBitmap!!).apply {
+//                            drawBitmap(bitmap, frameToCropTransform!!, null)
+//                        }
+//                        detector?.recognizeImage(croppedBitmap)?.let { listRecognitions ->
+//                            listRecognitions.forEach {
+//                                val location = it.location
+//                                if (location != null && it.confidence >= Constant.MINIMUM_CONFIDENCE_YOLO) {
+//                                    cropToFrameTransform?.mapRect(location)
+//                                    it.location = location
+//
+//                                    it.time = index.toLong()
+//
+//                                    val list = mappedRecognitions[it.id]
+//                                    if (list == null) {
+//                                        mappedRecognitions[it.id] = arrayListOf(it)
+//                                    } else {
+//                                        list.add(it)
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//
+//                    mappedRecognitions.values.forEach { value ->
+//                        value?.sortBy { it.time }
+//                    }
+//
+//                    return@fromCallable mappedRecognitions.map { map ->
+//                        val firstFace = map.value.first()
+//                        val lastFace = map.value.last()
+//
+//                        Face(map.key, firstFace.time, lastFace.time, map.value)
+//                    }
+//                }
+//                .subscribeOn(Schedulers.computation())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .doOnSubscribe {
+//                    showProgress()
+//                }
+//                .doFinally {
+//                    dismissProgress()
+//                }
+//                .subscribe({ results ->
+//                    faceView.setData(results)
+//                }, {
+//                    it.printStackTrace()
+//                })
+//                .addToCompositeDisposable(compositeDisposable)
     }
 
     private fun initDetector() {
         try {
             detector = TensorFlowYoloDetector.create(
-                    context?.assets,
-                    Constant.YOLO_MODEL_FILE,
-                    Constant.YOLO_INPUT_SIZE,
-                    Constant.YOLO_BLOCK_SIZE)
+                context?.assets,
+                Constant.YOLO_MODEL_FILE,
+                Constant.YOLO_INPUT_SIZE,
+                Constant.YOLO_BLOCK_SIZE)
         } catch (e: IOException) {
             e.printStackTrace()
         }
@@ -337,19 +347,42 @@ class EditorFragment : Fragment() {
 
         val sensorOrientation = 90
         frameToCropTransform = ImageUtils.getTransformationMatrix(
-                previewWidth, previewHeight,
-                cropSize, cropSize,
-                sensorOrientation, true)
+            previewWidth, previewHeight,
+            cropSize, cropSize,
+            sensorOrientation, true)
 
         cropToFrameTransform = Matrix()
         frameToCropTransform?.invert(cropToFrameTransform)
+    }
+
+    private fun updateSeekBar() {
+        var progressTime = player!!.currentPosition
+        if (progressTime > videoMetadata!!.duration) {
+            progressTime = videoMetadata!!.duration
+        }
+        val totalWidth = videoMetadata!!.frame.width * videoMetadata!!.frame.count
+        val progressX = (progressTime * totalWidth) / videoMetadata!!.duration
+        val position = (progressX / videoMetadata!!.frame.width).toInt()
+        val offset = (progressX % videoMetadata!!.frame.width).toInt()
+
+        timeLineView.scrollToPositionWithOffset(position, -offset)
+        calculateTextCurrentTime(progressX, totalWidth, false)
+    }
+
+    private fun startUpdateTimeLineView() {
+        updateTimeLineBarHandler.removeCallbacks(updateTimeLineRunnable)
+        updateTimeLineBarHandler.post(updateTimeLineRunnable)
+    }
+
+    private fun stopUpdateTimeLineView() {
+        updateTimeLineBarHandler.removeCallbacks(updateTimeLineRunnable)
     }
 
     inner class UpdateSeekBarRunnable : Runnable {
 
         override fun run() {
             updateSeekBar()
-            updateSeekBarHandler.postDelayed(this, INTERVAL)
+            updateTimeLineBarHandler.postDelayed(this, INTERVAL)
         }
     }
 }
