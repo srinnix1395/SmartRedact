@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.smartredact.R
 import com.example.smartredact.common.constants.Constants
-import com.example.smartredact.common.utils.addFragment
+import com.example.smartredact.common.utils.replaceFragment
 import com.example.smartredact.view.editor.EditorFragment
 import kotlinx.android.synthetic.main.fragment_home.*
 
@@ -63,7 +63,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun loadMediaFromLocal() {
-        activity?.supportFragmentManager?.addFragment(EditorFragment(), null, EditorFragment::class.java.simpleName)
+        activity?.supportFragmentManager?.replaceFragment(EditorFragment(), null, EditorFragment::class.java.simpleName)
 
 //        chooseFiles()
     }
@@ -92,7 +92,7 @@ class HomeFragment : Fragment() {
             EditorFragment.REQUEST_CODE_SELECT_FILE -> {
                 val bundle = Bundle()
                 bundle.putParcelable(Constants.BUNDLE, data.data)
-                activity?.supportFragmentManager?.addFragment(EditorFragment(), bundle, EditorFragment::class.java.simpleName)
+                activity?.supportFragmentManager?.replaceFragment(EditorFragment(), bundle, EditorFragment::class.java.simpleName)
             }
         }
     }

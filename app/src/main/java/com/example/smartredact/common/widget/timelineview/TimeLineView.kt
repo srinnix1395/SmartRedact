@@ -1,6 +1,7 @@
 package com.example.smartredact.common.widget.timelineview
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.util.AttributeSet
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -71,5 +72,9 @@ class TimeLineView : RecyclerView {
     fun setEnabledScrollToUpdate(isEnabled: Boolean) {
         enabledScrollToUpdate = isEnabled
         scrollListener?.setEnabled(isEnabled)
+    }
+
+    fun updateFrame(bitmap: Bitmap, position: Int) {
+        frameAdapter.updateItem(bitmap, position)
     }
 }

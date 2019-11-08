@@ -65,6 +65,11 @@ class FrameAdapter(context: Context?,
         notifyItemRangeInserted(index, listItems.size)
     }
 
+    fun updateItem(bitmap: Bitmap, position: Int) {
+        this.listItems[position] = bitmap
+        notifyItemChanged(position)
+    }
+
     interface Interactor {
 
         fun onClickItemListener(position: Int)

@@ -29,7 +29,7 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util.getUserAgent
-import io.reactivex.Observable
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -140,7 +140,7 @@ class EditorFragment : Fragment() {
         when (requestCode) {
             REQUEST_CODE_SELECT_FILE -> {
                 showVideo(data.data!!)
-                processVideo(data.data!!)
+                getMetadataVideo(data.data!!)
             }
         }
     }
@@ -166,12 +166,12 @@ class EditorFragment : Fragment() {
         player?.prepare(videoSource, true, false)
     }
 
-    private fun processVideo(data: Uri) {
-        Observable
+    private fun getMetadataVideo(data: Uri) {
+        Single
             .fromCallable {
                 return@fromCallable VideoUtils.extractMetadata(context, data, timeLineView.height * FRAME_HEIGHT_FACTOR)
             }
-            .subscribeOn(Schedulers.computation())
+            .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSubscribe {
                 showProgress()
@@ -184,8 +184,25 @@ class EditorFragment : Fragment() {
                 tvCurrentTime.text = TimeUtils.format(0L, true)
                 tvDuration.text = TimeUtils.format(videoMetadata.duration, true)
                 timeLineView.setData(videoMetadata.frame)
+
+                extractFrames(videoMetadata!!)
             }, {
                 it.printStackTrace()
+            })
+            .addToCompositeDisposable(compositeDisposable)
+    }
+
+    private fun extractFrames(videoMetadata: VideoMetadata) {
+        val frame = videoMetadata.frame
+
+        VideoUtils
+            .extractFrames(context, videoMetadata.uri, frame.count, frame.interval, frame.width.toInt(), frame.height.toInt())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ (bitmap, position) ->
+                timeLineView.updateFrame(bitmap, position)
+            }, { error ->
+                error.printStackTrace()
             })
             .addToCompositeDisposable(compositeDisposable)
     }
