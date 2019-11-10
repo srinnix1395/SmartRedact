@@ -63,7 +63,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun loadMediaFromLocal() {
-        activity?.supportFragmentManager?.replaceFragment(EditorFragment(), null, EditorFragment::class.java.simpleName)
+        activity?.supportFragmentManager?.replaceFragment(android.R.id.content, EditorFragment(), null, EditorFragment::class.java.simpleName)
 
 //        chooseFiles()
     }
@@ -92,10 +92,8 @@ class HomeFragment : Fragment() {
             EditorFragment.REQUEST_CODE_SELECT_FILE -> {
                 val bundle = Bundle()
                 bundle.putParcelable(Constants.BUNDLE, data.data)
-                activity?.supportFragmentManager?.replaceFragment(EditorFragment(), bundle, EditorFragment::class.java.simpleName)
+                activity?.supportFragmentManager?.replaceFragment(android.R.id.content, EditorFragment(), bundle, EditorFragment::class.java.simpleName)
             }
         }
     }
-
-
 }

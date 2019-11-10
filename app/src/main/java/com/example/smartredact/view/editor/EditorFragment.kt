@@ -13,13 +13,13 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartredact.R
+import com.example.smartredact.common.extension.addToCompositeDisposable
 import com.example.smartredact.common.facerecoginition.Classifier
 import com.example.smartredact.common.facerecoginition.Constant
 import com.example.smartredact.common.facerecoginition.TensorFlowYoloDetector
 import com.example.smartredact.common.utils.ImageUtils
 import com.example.smartredact.common.utils.TimeUtils
 import com.example.smartredact.common.utils.VideoUtils
-import com.example.smartredact.common.utils.addToCompositeDisposable
 import com.example.smartredact.data.model.VideoMetadata
 import com.example.smartredact.view.dialog.ProgressCommonDialog
 import com.google.android.exoplayer2.ExoPlayerFactory
@@ -186,8 +186,8 @@ class EditorFragment : Fragment() {
                 timeLineView.setData(videoMetadata.frame)
 
                 extractFrames(videoMetadata!!)
-            }, {
-                it.printStackTrace()
+            }, { error ->
+                error.printStackTrace()
             })
             .addToCompositeDisposable(compositeDisposable)
     }

@@ -8,6 +8,7 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import com.example.smartredact.data.model.VideoMetadata
 import io.reactivex.Observable
+import io.reactivex.disposables.Disposables
 import kotlin.math.max
 import kotlin.math.min
 
@@ -15,6 +16,8 @@ import kotlin.math.min
  * Created by TuHA on 10/31/2019.
  */
 object VideoUtils {
+
+    const val MINUTE = 60 * 1000
 
 //    fun extractMetadata(context: Context?, uri: Uri, dstHeight: Float): VideoMetadata {
 //        val retriever = MediaMetadataRetriever()
@@ -46,7 +49,7 @@ object VideoUtils {
         retriever.setDataSource(context, uri)
 
         val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong()
-        val frameCount = (duration / 1000).toInt()
+        val frameCount = getFrameCount(duration)
         val interval = duration.toFloat() / frameCount
 
         val bitmap = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST)
@@ -54,7 +57,8 @@ object VideoUtils {
         val height = bitmap.height.toFloat()
 
         val frameWidth = width * frameHeight / height
-        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, frameWidth.toInt(), frameHeight.toInt(), false)
+        val scaledBitmap =
+                Bitmap.createScaledBitmap(bitmap, frameWidth.toInt(), frameHeight.toInt(), false)
         val frame = VideoMetadata.Frame(frameWidth, frameHeight, frameCount, interval, scaledBitmap)
 
         retriever.release()
@@ -62,21 +66,39 @@ object VideoUtils {
         return VideoMetadata(uri, duration, width, height, frame)
     }
 
+    private fun getFrameCount(duration: Long): Int {
+        return when {
+            duration <= 1.5 * MINUTE -> (duration / 1000).toInt()
+            duration <= 4 * MINUTE -> (duration / 2000).toInt()
+            duration <= 6 * MINUTE -> (duration / 3000).toInt()
+            duration <= 8 * MINUTE -> (duration / 4000).toInt()
+            duration <= 10 * MINUTE -> (duration / 5000).toInt()
+            else -> (duration / 6000).toInt()
+        }
+    }
 
     fun extractFrames(context: Context?, uri: Uri, frameCount: Int, interval: Float, dstWidth: Int, dstHeight: Int): Observable<Pair<Bitmap, Int>> {
         return Observable.create<Pair<Bitmap, Int>> { emitter ->
             val retriever = MediaMetadataRetriever()
+            var isRelease = false
+
+            emitter.setDisposable(Disposables.fromAction {
+                retriever.release()
+                isRelease = true
+            })
 
             retriever.setDataSource(context, uri)
-
             for (i in 1 until frameCount) {
-                            val bitmap = retriever.getFrameAtTime((i * interval * 1000).toLong(), MediaMetadataRetriever.OPTION_CLOSEST)
-//                val bitmap = retriever.getFrameAtTime((i * interval * 1000).toLong())
-//                val scaledBitmap = Bitmap.createScaledBitmap(bitmap, dstWidth, dstHeight, false)
-//                bitmap.recycle()
-                emitter.onNext(Pair(bitmap, i))
+                if (isRelease) {
+                    return@create
+                }
+                val bitmap = retriever.getFrameAtTime((i * interval * 1000).toLong(), MediaMetadataRetriever.OPTION_CLOSEST)
+                val scaledBitmap = Bitmap.createScaledBitmap(bitmap, dstWidth, dstHeight, false)
+                bitmap.recycle()
+                emitter.onNext(Pair(scaledBitmap, i))
             }
             retriever.release()
+
             emitter.onComplete()
         }
     }
@@ -92,16 +114,27 @@ object VideoUtils {
         }
 
         val output = convertYUV420ToARGB8888(
-            cachedYuvBytes,
-            image.width, image.height, planes[0].rowStride, planes[1].rowStride, planes[1].pixelStride
+                cachedYuvBytes,
+                image.width,
+                image.height,
+                planes[0].rowStride,
+                planes[1].rowStride,
+                planes[1].pixelStride
         )
         return Bitmap.createBitmap(
-            Bitmap.createBitmap(output, image.width, image.height, Bitmap.Config.ARGB_8888),
-            0, 0, image.width, image.height, matrix, true
+                Bitmap.createBitmap(output, image.width, image.height, Bitmap.Config.ARGB_8888),
+                0, 0, image.width, image.height, matrix, true
         )
     }
 
-    private fun convertYUV420ToARGB8888(yuvData: Array<ByteArray>, width: Int, height: Int, yRowStride: Int, uvRowStride: Int, uvPixelStride: Int): IntArray {
+    private fun convertYUV420ToARGB8888(
+            yuvData: Array<ByteArray>,
+            width: Int,
+            height: Int,
+            yRowStride: Int,
+            uvRowStride: Int,
+            uvPixelStride: Int
+    ): IntArray {
         val out = IntArray(height * width)
         var i = 0
         for (y in 0 until height) {
@@ -126,7 +159,7 @@ object VideoUtils {
                 val nB = min(262143, max(0, nY + 2066 * nU)) shr 10 and 0xff
 
                 out[i++] =
-                    (0xff000000 or ((nR shl 16).toLong()) or ((nG shl 8).toLong()) or nB.toLong()).toInt()
+                        (0xff000000 or ((nR shl 16).toLong()) or ((nG shl 8).toLong()) or nB.toLong()).toInt()
             }
         }
         return out
