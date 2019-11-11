@@ -100,12 +100,12 @@ class EditorVideoPresenter @Inject constructor() : BasePresenter<EditorVideoView
         calculateTextCurrentTime(progressX, totalWidth, false)
     }
 
-    fun detectFaces(renderedWidth: Float, renderedHeight: Float) {
+    fun detectFaces(renderedWidth: Float, renderedHeight: Float, paddingHorizontal: Float, paddingVertical: Float) {
         Single
                 .fromCallable {
                     val srcWidth = videoMetadata.width
                     val srcHeight = videoMetadata.height
-                    return@fromCallable objectDetectionUtils.detectFacesVideo(videoMetadata.data, videoMetadata.duration, srcWidth, srcHeight, renderedWidth, renderedHeight)
+                    return@fromCallable objectDetectionUtils.detectFacesVideo(videoMetadata.data, videoMetadata.duration, srcWidth, srcHeight, renderedWidth, renderedHeight, paddingHorizontal, paddingVertical)
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

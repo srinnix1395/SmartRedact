@@ -49,7 +49,7 @@ class ObjectDetectionUtils(private val context: Context) {
         fullToCropMatrix?.invert(cropToFullMatrix)
     }
 
-    fun detectFacesVideo(uri: Uri, duration: Long, srcWidth: Float, srcHeight: Float, renderedWidth: Float, renderedHeight: Float): List<Face> {
+    fun detectFacesVideo(uri: Uri, duration: Long, srcWidth: Float, srcHeight: Float, renderedWidth: Float, renderedHeight: Float, paddingHorizontal: Float, paddingVertical: Float): List<Face> {
         val retriever = MediaMetadataRetriever().apply {
             setDataSource(context, uri)
         }
@@ -67,8 +67,7 @@ class ObjectDetectionUtils(private val context: Context) {
                 listRecognitions.forEach {
                     val location = it.location
                     if (location != null && it.confidence > 0.5) {
-                        cropToFullMatrix?.mapRect(location)
-                        it.location = mapRectToActualSize(location, srcWidth, srcHeight, renderedWidth, renderedHeight)
+                        it.location = mapRectToActualSize(location, srcWidth, srcHeight, renderedWidth, renderedHeight, paddingHorizontal, paddingVertical)
 
                         it.startTime = i
                         it.endTime = i + 1
@@ -98,17 +97,19 @@ class ObjectDetectionUtils(private val context: Context) {
         }
     }
 
-    private fun mapRectToActualSize(location: RectF, srcWidth: Float, srcHeight: Float, renderedWidth: Float, renderedHeight: Float): RectF {
+    private fun mapRectToActualSize(location: RectF, srcWidth: Float, srcHeight: Float, renderedWidth: Float, renderedHeight: Float, paddingHorizontal: Float, paddingVertical: Float): RectF {
+        cropToFullMatrix?.mapRect(location)
+
         val mapLeft = location.left * renderedWidth / srcWidth
-        val mapRight = location.right * renderedWidth / srcWidth
+        val mapRight = mapLeft + location.width()
         val mapTop = location.top * renderedHeight / srcHeight
-        val mapBottom = location.bottom * renderedHeight / srcHeight
+        val mapBottom = mapTop + location.height()
 
         location.apply {
-            left = mapLeft
-            right = mapRight
-            top = mapTop
-            bottom = mapBottom
+            left = mapLeft + paddingHorizontal
+            right = mapRight + paddingHorizontal
+            top = mapTop + paddingVertical
+            bottom = mapBottom + paddingVertical
         }
 
         return location

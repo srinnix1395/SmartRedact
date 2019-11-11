@@ -102,7 +102,9 @@ class EditorVideoFragment : BaseFragment(), EditorVideoView {
         }
 
         imvDetectFace.setOnClickListener {
-            mPresenter.detectFaces(renderedWidth, renderedHeight)
+            val paddingHorizontal = (playerControlView.width - renderedWidth) / 2
+            val paddingVertical = (playerControlView.height - renderedHeight) / 2
+            mPresenter.detectFaces(renderedWidth, renderedHeight, paddingHorizontal, paddingVertical)
         }
         imvPlayPause.setOnClickListener {
             playOrPause()
@@ -126,8 +128,10 @@ class EditorVideoFragment : BaseFragment(), EditorVideoView {
 
     //region implement EditorVideoView
     override fun showVideo(videoMetadata: VideoMetadata) {
-        val dataSourceFactory = DefaultDataSourceFactory(context, getUserAgent(context, "SmartRedact"))
-        val videoSource = ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(videoMetadata.data)
+        val dataSourceFactory =
+            DefaultDataSourceFactory(context, getUserAgent(context, "SmartRedact"))
+        val videoSource =
+            ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(videoMetadata.data)
         player.prepare(videoSource, true, false)
 
         tvCurrentTime.text = TimeUtils.format(0L, true)
@@ -159,7 +163,6 @@ class EditorVideoFragment : BaseFragment(), EditorVideoView {
             recognitions.addAll(face.face)
         }
         overlayView.setData(recognitions)
-        Toast.makeText(context, recognitions[0].startTime.toString(), Toast.LENGTH_LONG).show()
     }
     //endregion implement EditorVideoView
 
