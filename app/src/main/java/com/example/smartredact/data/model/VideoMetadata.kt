@@ -9,11 +9,12 @@ class VideoMetadata() : Metadata() {
 
     lateinit var frame: Frame
 
-    constructor(data: Uri, duration: Long, width: Float, height: Float, frame: Frame) : this() {
+    constructor(data: Uri, duration: Long, orientation: Int, width: Float, height: Float, frame: Frame) : this() {
         this.data = data
+        this.duration = duration
+        this.orientation = orientation
         this.width = width
         this.height = height
-        this.duration = duration
         this.frame = frame
     }
 

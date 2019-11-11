@@ -2,7 +2,6 @@ package com.example.smartredact.common.di.module
 
 import androidx.appcompat.app.AppCompatActivity
 import com.example.smartredact.common.di.annotation.ActivityContext
-import com.example.smartredact.common.utils.VideoUtils
 import dagger.Module
 import dagger.Provides
 
@@ -16,10 +15,5 @@ class ActivityModule(private val activity: AppCompatActivity) {
     @ActivityContext
     fun provideActivityContext(): AppCompatActivity {
         return activity
-    }
-
-    @Provides
-    fun provideVideoUtils(): VideoUtils {
-        return VideoUtils(activity)
     }
 }

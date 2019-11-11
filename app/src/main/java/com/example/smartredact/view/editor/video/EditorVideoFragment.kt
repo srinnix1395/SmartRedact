@@ -3,10 +3,13 @@ package com.example.smartredact.view.editor.video
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Handler
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartredact.R
 import com.example.smartredact.common.di.component.ActivityComponent
+import com.example.smartredact.common.facerecoginition.Classifier
 import com.example.smartredact.common.utils.TimeUtils
+import com.example.smartredact.common.widget.faceview.Face
 import com.example.smartredact.data.model.VideoMetadata
 import com.example.smartredact.view.base.BaseFragment
 import com.google.android.exoplayer2.ExoPlayerFactory
@@ -16,6 +19,7 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util.getUserAgent
+import com.google.android.exoplayer2.video.VideoListener
 import kotlinx.android.synthetic.main.fragment_editor.*
 import javax.inject.Inject
 
@@ -33,15 +37,12 @@ class EditorVideoFragment : BaseFragment(), EditorVideoView {
     @Inject
     lateinit var mPresenter: EditorVideoPresenter
 
-    private var player: SimpleExoPlayer? = null
+    private lateinit var player: SimpleExoPlayer
+    private var renderedWidth: Float = 0F
+    private var renderedHeight: Float = 0F
 
     private var updateTimeLineBarHandler: Handler = Handler()
     private val updateTimeLineRunnable: UpdateSeekBarRunnable = UpdateSeekBarRunnable()
-
-//    private var detector: Classifier? = null
-//    private var croppedBitmap: Bitmap? = null
-//    private var frameToCropTransform: Matrix? = null
-//    private var cropToFrameTransform: Matrix? = null
 
     override fun inject(activityComponent: ActivityComponent) {
         activityComponent.inject(this)
@@ -57,6 +58,7 @@ class EditorVideoFragment : BaseFragment(), EditorVideoView {
     }
 
     override fun onDestroy() {
+        releaseHandler()
         releasePlayer()
         mPresenter.detachView()
         super.onDestroy()
@@ -64,8 +66,8 @@ class EditorVideoFragment : BaseFragment(), EditorVideoView {
 
     override fun initView() {
         player = ExoPlayerFactory.newSimpleInstance(context)
-        player?.seekParameters = SeekParameters.EXACT
-        player?.addListener(object : Player.EventListener {
+        player.seekParameters = SeekParameters.EXACT
+        player.addListener(object : Player.EventListener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 if (isPlaying) {
                     timeLineView.setEnabledScrollToUpdate(false)
@@ -76,8 +78,14 @@ class EditorVideoFragment : BaseFragment(), EditorVideoView {
                     timeLineView.setEnabledScrollToUpdate(true)
                     stopUpdateTimeLineView()
                     imvPlayPause.setImageResource(R.drawable.ic_play)
-                    mPresenter.updateSeekBar(player!!.currentPosition)
+                    mPresenter.updateSeekBar(player.currentPosition)
                 }
+            }
+        })
+        player.addVideoListener(object : VideoListener {
+            override fun onSurfaceSizeChanged(width: Int, height: Int) {
+                renderedWidth = width.toFloat()
+                renderedHeight = height.toFloat()
             }
         })
         playerControlView.player = player
@@ -87,14 +95,14 @@ class EditorVideoFragment : BaseFragment(), EditorVideoView {
                 mPresenter.calculateTextCurrentTime(progress, total, true)
             }
             setOnScrollStateChanged { state ->
-                if (state == RecyclerView.SCROLL_STATE_DRAGGING && player?.isPlaying == true) {
+                if (state == RecyclerView.SCROLL_STATE_DRAGGING && player.isPlaying) {
                     pausePlayer()
                 }
             }
         }
 
         imvDetectFace.setOnClickListener {
-            detectFaces()
+            mPresenter.detectFaces(renderedWidth, renderedHeight)
         }
         imvPlayPause.setOnClickListener {
             playOrPause()
@@ -120,7 +128,7 @@ class EditorVideoFragment : BaseFragment(), EditorVideoView {
     override fun showVideo(videoMetadata: VideoMetadata) {
         val dataSourceFactory = DefaultDataSourceFactory(context, getUserAgent(context, "SmartRedact"))
         val videoSource = ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(videoMetadata.data)
-        player?.prepare(videoSource, true, false)
+        player.prepare(videoSource, true, false)
 
         tvCurrentTime.text = TimeUtils.format(0L, true)
         tvDuration.text = TimeUtils.format(videoMetadata.duration, true)
@@ -136,154 +144,67 @@ class EditorVideoFragment : BaseFragment(), EditorVideoView {
     }
 
     override fun seekTo(currentTime: Long) {
-        player?.seekTo(currentTime)
+        player.seekTo(currentTime)
     }
 
     override fun scrollTimeLineView(position: Int, offset: Int) {
         timeLineView.scrollToPositionWithOffset(position, offset)
     }
+
+    override fun showListFace(listFace: List<Face>) {
+        listFaceView.setData(listFace)
+
+        val recognitions = arrayListOf<Classifier.Recognition>()
+        listFace.forEach { face ->
+            recognitions.addAll(face.face)
+        }
+        overlayView.setData(recognitions)
+        Toast.makeText(context, recognitions[0].startTime.toString(), Toast.LENGTH_LONG).show()
+    }
     //endregion implement EditorVideoView
 
     private fun releasePlayer() {
-        if (player == null) {
-            return
-        }
+        player.release()
+    }
 
-        player!!.release()
-        player = null
+    private fun releaseHandler() {
+        updateTimeLineBarHandler.removeCallbacks(updateTimeLineRunnable)
     }
 
     private fun playOrPause() {
-        if (player == null) {
-            return
-        }
-
-        if (player!!.isPlaying) {
+        if (player.isPlaying) {
             pausePlayer()
         } else {
-            if (player!!.playbackState == Player.STATE_ENDED) {
-                player!!.seekTo(0)
+            if (player.playbackState == Player.STATE_ENDED) {
+                player.seekTo(0)
             }
             playPlayer()
         }
     }
 
     private fun playPlayer() {
-        player?.playWhenReady = true
+        player.playWhenReady = true
     }
 
     private fun pausePlayer() {
-        player?.playWhenReady = false
+        player.playWhenReady = false
     }
 
     private fun seekToNextFrame() {
-        if (player == null) {
-            return
+        val nextPosition = Math.min(player.currentPosition + 1000, player.duration)
+        player.seekTo(nextPosition)
+        if (!player.isPlaying) {
+            mPresenter.updateSeekBar(nextPosition)
         }
-
-        val currentPosition = player!!.currentPosition
-        player!!.seekTo(currentPosition + 1000)
     }
 
     private fun seekToPreviousFrame() {
-        if (player == null) {
-            return
+        val previousPosition = Math.max(0, player.currentPosition - 1000)
+        player.seekTo(previousPosition)
+        if (!player.isPlaying) {
+            mPresenter.updateSeekBar(previousPosition)
         }
-
-        val currentPosition = player!!.currentPosition
-        player!!.seekTo(currentPosition - 1000)
     }
-
-    private fun detectFaces() {
-//        if (videoMetadata == null) {
-//            return
-//        }
-//
-//        if (detector == null) {
-//            initDetector()
-//        }
-//
-//        Single
-//                .fromCallable {
-//                    val frames = VideoUtils.extractFrames(context, videoMetadata!!.uri, videoMetadata!!.frame.count)
-//                    val mappedRecognitions = ArrayMap<String, ArrayList<Classifier.Recognition>>()
-//
-//                    frames.forEachIndexed { index, bitmap ->
-//                        Canvas(croppedBitmap!!).apply {
-//                            drawBitmap(bitmap, frameToCropTransform!!, null)
-//                        }
-//                        detector?.recognizeImage(croppedBitmap)?.let { listRecognitions ->
-//                            listRecognitions.forEach {
-//                                val location = it.location
-//                                if (location != null && it.confidence >= Constant.MINIMUM_CONFIDENCE_YOLO) {
-//                                    cropToFrameTransform?.mapRect(location)
-//                                    it.location = location
-//
-//                                    it.time = index.toLong()
-//
-//                                    val list = mappedRecognitions[it.id]
-//                                    if (list == null) {
-//                                        mappedRecognitions[it.id] = arrayListOf(it)
-//                                    } else {
-//                                        list.add(it)
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//
-//                    mappedRecognitions.values.forEach { value ->
-//                        value?.sortBy { it.time }
-//                    }
-//
-//                    return@fromCallable mappedRecognitions.map { map ->
-//                        val firstFace = map.value.first()
-//                        val lastFace = map.value.last()
-//
-//                        Face(map.key, firstFace.time, lastFace.time, map.value)
-//                    }
-//                }
-//                .subscribeOn(Schedulers.computation())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .doOnSubscribe {
-//                    showProgress()
-//                }
-//                .doFinally {
-//                    dismissProgress()
-//                }
-//                .subscribe({ results ->
-//                    faceView.setData(results)
-//                }, {
-//                    it.printStackTrace()
-//                })
-//                .addToCompositeDisposable(compositeDisposable)
-    }
-
-//    private fun initDetector() {
-//        try {
-//            detector = TensorFlowYoloDetector.create(
-//                context?.assets,
-//                Constant.YOLO_MODEL_FILE,
-//                Constant.YOLO_INPUT_SIZE,
-//                Constant.YOLO_BLOCK_SIZE)
-//        } catch (e: IOException) {
-//            e.printStackTrace()
-//        }
-//
-//        val previewWidth = videoMetadata.width.toInt()
-//        val previewHeight = videoMetadata.height.toInt()
-//        val cropSize = Constant.YOLO_INPUT_SIZE
-//        croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Bitmap.Config.ARGB_8888)
-//
-//        val sensorOrientation = 90
-//        frameToCropTransform = ImageUtils.getTransformationMatrix(
-//            previewWidth, previewHeight,
-//            cropSize, cropSize,
-//            sensorOrientation, true)
-//
-//        cropToFrameTransform = Matrix()
-//        frameToCropTransform?.invert(cropToFrameTransform)
-//    }
 
     private fun startUpdateTimeLineView() {
         updateTimeLineBarHandler.removeCallbacks(updateTimeLineRunnable)
@@ -297,7 +218,11 @@ class EditorVideoFragment : BaseFragment(), EditorVideoView {
     inner class UpdateSeekBarRunnable : Runnable {
 
         override fun run() {
-            mPresenter.updateSeekBar(player!!.currentPosition)
+            if (player.playbackState == Player.STATE_IDLE) {
+                return
+            }
+
+            mPresenter.updateSeekBar(player.currentPosition)
             updateTimeLineBarHandler.postDelayed(this, INTERVAL)
         }
     }

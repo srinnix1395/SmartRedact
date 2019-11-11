@@ -10,10 +10,10 @@ import kotlinx.android.synthetic.main.item_child_face.*
 /**
  * Created by TuHA on 11/7/2019.
  */
-class FaceChildViewHolder(override val containerView: View,
-                          interactor: FaceAdapter.Interactor?) : CommonChildViewHolder(containerView), LayoutContainer {
+class ListFaceChildViewHolder(override val containerView: View,
+                              interactor: ListFaceAdapter.Interactor?) : CommonChildViewHolder(containerView), LayoutContainer {
 
     fun bindData(recognition: Classifier.Recognition) {
-        tvTime.text = TimeUtils.format(recognition.time * 1000, false)
+        tvTime.text = TimeUtils.format(recognition.startTime * 1000, false)
     }
 }

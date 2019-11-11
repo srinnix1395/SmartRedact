@@ -49,7 +49,9 @@ public interface Classifier {
          */
         private RectF location;
 
-        private long time;
+        private long startTime;
+
+        private long endTime;
 
         public Recognition(String id, String title, Float confidence, RectF location) {
             this.id = id;
@@ -78,12 +80,20 @@ public interface Classifier {
             this.location = location;
         }
 
-        public void setTime(long time) {
-            this.time = time;
+        public void setStartTime(long time) {
+            this.startTime = time;
         }
 
-        public long getTime() {
-            return time;
+        public long getStartTime() {
+            return startTime;
+        }
+
+        public void setEndTime(long endTime) {
+            this.endTime = endTime;
+        }
+
+        public long getEndTime() {
+            return endTime;
         }
 
         @Override

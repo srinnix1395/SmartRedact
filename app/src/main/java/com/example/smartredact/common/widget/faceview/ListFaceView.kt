@@ -8,10 +8,10 @@ import androidx.recyclerview.widget.RecyclerView
 /**
  * Created by TuHA on 11/6/2019.
  */
-class FaceView : RecyclerView {
+class ListFaceView : RecyclerView {
 
     private lateinit var linearLayoutManager: LinearLayoutManager
-    private lateinit var faceAdapter: FaceAdapter
+    private lateinit var faceAdapter: ListFaceAdapter
 
     constructor(context: Context) : super(context)
 
@@ -28,7 +28,7 @@ class FaceView : RecyclerView {
         linearLayoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         layoutManager = linearLayoutManager
 
-        faceAdapter = FaceAdapter(context, arrayListOf(), null)
+        faceAdapter = ListFaceAdapter(context, arrayListOf(), null)
         adapter = faceAdapter
     }
 

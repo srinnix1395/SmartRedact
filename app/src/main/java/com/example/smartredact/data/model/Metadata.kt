@@ -9,6 +9,8 @@ abstract class Metadata {
 
     lateinit var data: Uri
 
+    var orientation: Int = 90
+
     var width: Float = 0F
 
     var height: Float = 0F

@@ -27,6 +27,7 @@ class VideoUtils(private val context: Context) {
         retriever.setDataSource(context, uri)
 
         val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong()
+        val orientation = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION).toInt()
         val frameCount = getFrameCount(duration)
         val interval = duration.toFloat() / frameCount
 
@@ -40,7 +41,7 @@ class VideoUtils(private val context: Context) {
 
         retriever.release()
 
-        return VideoMetadata(uri, duration, width, height, frame)
+        return VideoMetadata(uri, duration, orientation, width, height, frame)
     }
 
     private fun getFrameCount(duration: Long): Int {
@@ -91,26 +92,26 @@ class VideoUtils(private val context: Context) {
         }
 
         val output = convertYUV420ToARGB8888(
-            cachedYuvBytes,
-            image.width,
-            image.height,
-            planes[0].rowStride,
-            planes[1].rowStride,
-            planes[1].pixelStride
+                cachedYuvBytes,
+                image.width,
+                image.height,
+                planes[0].rowStride,
+                planes[1].rowStride,
+                planes[1].pixelStride
         )
         return Bitmap.createBitmap(
-            Bitmap.createBitmap(output, image.width, image.height, Bitmap.Config.ARGB_8888),
-            0, 0, image.width, image.height, matrix, true
+                Bitmap.createBitmap(output, image.width, image.height, Bitmap.Config.ARGB_8888),
+                0, 0, image.width, image.height, matrix, true
         )
     }
 
     private fun convertYUV420ToARGB8888(
-        yuvData: Array<ByteArray>,
-        width: Int,
-        height: Int,
-        yRowStride: Int,
-        uvRowStride: Int,
-        uvPixelStride: Int
+            yuvData: Array<ByteArray>,
+            width: Int,
+            height: Int,
+            yRowStride: Int,
+            uvRowStride: Int,
+            uvPixelStride: Int
     ): IntArray {
         val out = IntArray(height * width)
         var i = 0
@@ -136,7 +137,7 @@ class VideoUtils(private val context: Context) {
                 val nB = min(262143, max(0, nY + 2066 * nU)) shr 10 and 0xff
 
                 out[i++] =
-                    (0xff000000 or ((nR shl 16).toLong()) or ((nG shl 8).toLong()) or nB.toLong()).toInt()
+                        (0xff000000 or ((nR shl 16).toLong()) or ((nG shl 8).toLong()) or nB.toLong()).toInt()
             }
         }
         return out

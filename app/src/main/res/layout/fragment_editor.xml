@@ -149,7 +149,6 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/padding_editor"
-        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/guideline1"
         app:layout_constraintEnd_toStartOf="@+id/guideline2"
         app:layout_constraintStart_toEndOf="@+id/layoutTools"
@@ -229,8 +228,8 @@
         app:layout_constraintStart_toStartOf="@+id/guideline2"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.example.smartredact.common.widget.faceview.FaceView
-            android:id="@+id/faceView"
+        <com.example.smartredact.common.widget.faceview.ListFaceView
+            android:id="@+id/listFaceView"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 

@@ -10,8 +10,8 @@ import kotlinx.android.synthetic.main.item_header_face.*
 /**
  * Created by TuHA on 11/7/2019.
  */
-class FaceHeaderViewHolder(override val containerView: View,
-                           interactor: FaceAdapter.Interactor?) : CommonHeaderViewHolder(containerView), LayoutContainer {
+class ListFaceHeaderViewHolder(override val containerView: View,
+                               interactor: ListFaceAdapter.Interactor?) : CommonHeaderViewHolder(containerView), LayoutContainer {
 
     fun bindData(face: Face) {
         tvCount.text = face.face.size.toString()

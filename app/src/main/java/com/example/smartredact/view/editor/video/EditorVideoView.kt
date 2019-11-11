@@ -1,6 +1,7 @@
 package com.example.smartredact.view.editor.video
 
 import android.graphics.Bitmap
+import com.example.smartredact.common.widget.faceview.Face
 import com.example.smartredact.data.model.VideoMetadata
 import com.example.smartredact.view.base.BaseView
 
@@ -18,4 +19,6 @@ interface EditorVideoView : BaseView {
     fun seekTo(currentTime: Long)
 
     fun scrollTimeLineView(position: Int, offset: Int)
+
+    fun showListFace(listFace: List<Face>)
 }
