@@ -1,13 +1,15 @@
 package com.example.smartredact.view.home
 
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import com.example.smartredact.common.utils.addFragment
+import com.example.smartredact.common.extension.addFragment
+import com.example.smartredact.view.base.BaseActivity
 
-class HomeActivity : AppCompatActivity() {
+class HomeActivity : BaseActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        supportFragmentManager.addFragment(android.R.id.content, HomeFragment(), null, HomeFragment::class.java.simpleName, addToBackStack = false)
+    override fun getLayoutId(): Int {
+        return 0
+    }
+
+    override fun initView() {
+        addFragment(HomeFragment(), android.R.id.content, false)
     }
 }

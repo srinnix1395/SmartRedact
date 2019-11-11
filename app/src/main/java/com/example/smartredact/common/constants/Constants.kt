@@ -1,9 +1,11 @@
 package com.example.smartredact.common.constants
 
-class Constants{
-    companion object{
-        val BUNDLE = "BUNDLE"
-        val IS_FIRTS_LAUNCHER = "IS_FIRTS_LAUNCHER"
-        val SHARED_PREFERENCES_SMART_REDACT = "SHARED_PREFERENCES_SMART_REDACT"
+object Constants {
+
+    const val KEY_SESSION = "KEY_SESSION"
+    const val IS_FIRST_LAUNCHER = "IS_FIRST_LAUNCHER"
+
+    object SharedPreferences {
+        const val NAME = "SHARED_PREFERENCES_SMART_REDACT"
     }
 }

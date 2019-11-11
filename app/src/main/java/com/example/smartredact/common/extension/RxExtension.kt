@@ -5,9 +5,8 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 
 /**
- * Created by TuHA on 11/6/2019.
+ * Created by TuHA on 6/6/2019.
  */
-
 fun Disposable.addToCompositeDisposable(compositeDisposable: CompositeDisposable) {
     compositeDisposable.add(this)
 }

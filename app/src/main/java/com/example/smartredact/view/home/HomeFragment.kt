@@ -3,32 +3,33 @@ package com.example.smartredact.view.home
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.Fragment
 import com.example.smartredact.R
 import com.example.smartredact.common.constants.Constants
-import com.example.smartredact.common.utils.replaceFragment
-import com.example.smartredact.view.editor.EditorFragment
+import com.example.smartredact.common.di.component.ActivityComponent
+import com.example.smartredact.common.extension.replaceFragment
+import com.example.smartredact.common.utils.FileUtils
+import com.example.smartredact.data.model.Session
+import com.example.smartredact.view.base.BaseFragment
+import com.example.smartredact.view.editor.image.EditorImageFragment
+import com.example.smartredact.view.editor.video.EditorVideoFragment
 import kotlinx.android.synthetic.main.fragment_home.*
 
-class HomeFragment : Fragment() {
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_home, container, false)
+class HomeFragment : BaseFragment() {
+
+    companion object {
+        const val REQUEST_CODE_SELECT_FILE = 1234
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        initView()
+    override fun inject(activityComponent: ActivityComponent) {
+        activityComponent.inject(this)
     }
 
-    private fun initView() {
+    override fun getLayoutId(): Int {
+        return R.layout.fragment_home
+    }
+
+    override fun initView() {
         btnOpenLastEditSession.setOnClickListener {
             Toast.makeText(
                 this.context,
@@ -37,62 +38,68 @@ class HomeFragment : Fragment() {
             ).show()
         }
         btnAllPreviousSessions.setOnClickListener {
-            Toast.makeText(
-                this.context,
-                this.context!!.getString(R.string.all_previous_sessions),
-                Toast.LENGTH_SHORT
-            ).show()
+            openLastSession()
         }
         btnRecordANewVideo.setOnClickListener {
-            Toast.makeText(
-                this.context,
-                this.context!!.getString(R.string.record_a_new_video),
-                Toast.LENGTH_SHORT
-            ).show()
+            recordVideo()
         }
         btnTakeAPicture.setOnClickListener {
-            Toast.makeText(
-                this.context,
-                this.context!!.getString(R.string.take_a_picture),
-                Toast.LENGTH_SHORT
-            ).show()
+            takePicture()
         }
         btnLoadMediaFromLocal.setOnClickListener {
-            loadMediaFromLocal()
+            chooseMedias()
         }
     }
 
-    private fun loadMediaFromLocal() {
-        activity?.supportFragmentManager?.replaceFragment(android.R.id.content, EditorFragment(), null, EditorFragment::class.java.simpleName)
+    private fun openLastSession() {
 
-//        chooseFiles()
     }
 
-    private fun chooseFiles() {
-        fun openIntentGetFile() {
-            val intent = Intent(Intent.ACTION_GET_CONTENT)
-            intent.addCategory(Intent.CATEGORY_OPENABLE)
-            intent.type = "video/*"
-            intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
-            startActivityForResult(
-                Intent.createChooser(intent, "Choose a file"),
-                EditorFragment.REQUEST_CODE_SELECT_FILE
-            )
-        }
-        openIntentGetFile()
+    private fun takePicture() {
+        //todo KienNT
+    }
+
+    private fun recordVideo() {
+        //todo KienNT
+    }
+
+    private fun chooseMedias() {
+        Intent(Intent.ACTION_OPEN_DOCUMENT)
+            .apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "image/*"
+                putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
+                putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+            }
+            .let {
+                startActivityForResult(Intent.createChooser(it, "Choose a file"), REQUEST_CODE_SELECT_FILE)
+            }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+
         if (data == null || resultCode != Activity.RESULT_OK) {
             return
         }
 
         when (requestCode) {
-            EditorFragment.REQUEST_CODE_SELECT_FILE -> {
-                val bundle = Bundle()
-                bundle.putParcelable(Constants.BUNDLE, data.data)
-                activity?.supportFragmentManager?.replaceFragment(android.R.id.content, EditorFragment(), bundle, EditorFragment::class.java.simpleName)
+            REQUEST_CODE_SELECT_FILE -> {
+                val session = Session(Session.NEW, data.data)
+                val bundle = Bundle().apply {
+                    putParcelable(Constants.KEY_SESSION, session)
+                }
+                if (FileUtils.isImage(data.data)) {
+                    val fragment = EditorImageFragment().apply {
+                        arguments = bundle
+                    }
+                    parentActivity.replaceFragment(fragment, android.R.id.content, true)
+                } else {
+                    val fragment = EditorVideoFragment().apply {
+                        arguments = bundle
+                    }
+                    parentActivity.replaceFragment(fragment, android.R.id.content, true)
+                }
             }
         }
     }

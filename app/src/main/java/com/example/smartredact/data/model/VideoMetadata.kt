@@ -3,11 +3,19 @@ package com.example.smartredact.data.model
 import android.graphics.Bitmap
 import android.net.Uri
 
-data class VideoMetadata(var uri: Uri,
-                         var duration: Long,
-                         var width: Float,
-                         var height: Float,
-                         var frame: Frame) {
+class VideoMetadata() : Metadata() {
+
+    var duration: Long = 0L
+
+    lateinit var frame: Frame
+
+    constructor(data: Uri, duration: Long, width: Float, height: Float, frame: Frame) : this() {
+        this.data = data
+        this.width = width
+        this.height = height
+        this.duration = duration
+        this.frame = frame
+    }
 
     data class Frame(var width: Float,
                      var height: Float,
