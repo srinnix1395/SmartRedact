@@ -2,6 +2,7 @@ package com.example.smartredact.common.di.component
 
 import com.example.smartredact.common.di.annotation.ActivityScope
 import com.example.smartredact.common.di.module.ActivityModule
+import com.example.smartredact.view.editor.image.EditorImageFragment
 import com.example.smartredact.view.editor.video.EditorVideoFragment
 import com.example.smartredact.view.home.HomeFragment
 import dagger.Subcomponent
@@ -15,6 +16,7 @@ interface ActivityComponent {
 
     fun inject(editorVideoFragment: EditorVideoFragment)
     fun inject(homeFragment: HomeFragment)
+    fun inject(editorImageFragment: EditorImageFragment)
 
     @Subcomponent.Builder
     interface Builder {

@@ -16,7 +16,6 @@ class SplashActivity : AppCompatActivity() {
 
         val isFirstLauncher = SharedPreferencesUtils.getBoolean(Constants.IS_FIRST_LAUNCHER, true)
         val intent = if (isFirstLauncher) {
-            SharedPreferencesUtils.put(Constants.IS_FIRST_LAUNCHER, false)
             Intent(this, IntroActivity::class.java)
         } else {
             Intent(this, HomeActivity::class.java)

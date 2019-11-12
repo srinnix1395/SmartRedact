@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/color_editor_dark"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:id="@+id/layoutTools"
+        android:layout_width="56dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="@dimen/padding_editor"
+        android:layout_marginTop="@dimen/padding_editor"
+        android:layout_marginBottom="@dimen/padding_editor"
+        android:background="@drawable/background_editor_tool"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/imvExtract"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="center"
+            android:src="@drawable/ic_export" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:background="@color/color_editor_dark" />
+
+        <ImageView
+            android:id="@+id/imvDetectFace"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="center"
+            android:src="@drawable/ic_face_recognition" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:background="@color/color_editor_dark" />
+
+        <ImageView
+            android:id="@+id/imvNotification"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="center"
+            android:src="@drawable/ic_notification" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:background="@color/color_editor_dark" />
+
+        <ImageView
+            android:id="@+id/imvSetting"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="center"
+            android:src="@drawable/ic_setting" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:background="@color/color_editor_dark" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/imgPhoto"
+        />
+
+</LinearLayout>
