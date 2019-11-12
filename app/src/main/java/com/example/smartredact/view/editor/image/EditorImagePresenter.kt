@@ -14,8 +14,8 @@ class EditorImagePresenter @javax.inject.Inject constructor() : BasePresenter<Ed
         session = extras?.getParcelable(Constants.KEY_SESSION)!!
     }
 
-    fun setImageURI(){
-        view?.getImageViewPhoto()?.setImageURI(session.data)
+    fun setImageViewPhoto(){
+        view?.setImageViewPhoto(session.data!!)
     }
 
 }

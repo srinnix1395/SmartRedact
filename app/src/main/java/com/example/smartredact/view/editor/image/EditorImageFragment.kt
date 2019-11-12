@@ -1,8 +1,7 @@
 package com.example.smartredact.view.editor.image
 
+import android.net.Uri
 import android.os.Bundle
-import android.widget.ImageView
-import androidx.fragment.app.FragmentActivity
 import com.example.smartredact.R
 import com.example.smartredact.common.di.component.ActivityComponent
 import com.example.smartredact.view.base.BaseFragment
@@ -13,13 +12,6 @@ import javax.inject.Inject
  * Created by TuHA on 11/11/2019.
  */
 class EditorImageFragment : BaseFragment() , EditorImageView {
-    override fun getActivityEditorImage(): FragmentActivity {
-        return this.activity!!
-    }
-
-    override fun getImageViewPhoto(): ImageView {
-        return imgPhoto
-    }
 
     @Inject
     lateinit var mPresenter: EditorImagePresenter
@@ -48,7 +40,11 @@ class EditorImageFragment : BaseFragment() , EditorImageView {
 
     override fun initData() {
         mPresenter.getArguments(arguments)
-        mPresenter.setImageURI()
+        mPresenter.setImageViewPhoto()
+    }
+
+    override fun setImageViewPhoto(uri: Uri) {
+        imgPhoto.setImageURI(uri)
     }
 
 }
