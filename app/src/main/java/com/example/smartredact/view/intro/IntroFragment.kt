@@ -7,7 +7,9 @@ import android.view.View
 import android.widget.TextView
 import androidx.viewpager.widget.ViewPager
 import com.example.smartredact.R
+import com.example.smartredact.common.constants.Constants
 import com.example.smartredact.common.di.component.ActivityComponent
+import com.example.smartredact.data.local.SharedPreferencesUtils
 import com.example.smartredact.view.base.BaseFragment
 import com.example.smartredact.view.home.HomeActivity
 import kotlinx.android.synthetic.main.fragment_intro.*
@@ -80,13 +82,18 @@ class IntroFragment : BaseFragment() {
     }
 
     private fun launchHomeActivity() {
+        SharedPreferencesUtils.put(Constants.IS_FIRST_LAUNCHER, false)
         val intent = Intent(this.activity, HomeActivity::class.java)
         startActivity(intent)
         this.activity?.finish()
     }
 
     override fun onBackPressed(): Boolean {
-        //todo KienNT
+        if(currentPage == 0){
+            this.activity?.finish()
+        } else{
+            vpIntroScreen.currentItem = --currentPage
+        }
         return true
     }
 }

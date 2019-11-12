@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.viewpager.widget.PagerAdapter
 import com.example.smartredact.R
 
-class IntroViewPagerAdapter(val mContext: Context) : PagerAdapter() {
+class IntroViewPagerAdapter(private val mContext: Context) : PagerAdapter() {
 
     companion object {
         val layouts: IntArray = intArrayOf(
