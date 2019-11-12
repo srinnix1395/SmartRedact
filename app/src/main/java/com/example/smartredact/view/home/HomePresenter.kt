@@ -8,5 +8,4 @@ import javax.inject.Inject
  */
 class HomePresenter @Inject constructor() : BasePresenter<HomeView>() {
 
-
 }
