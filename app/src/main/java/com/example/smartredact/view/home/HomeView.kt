@@ -8,5 +8,4 @@ import com.example.smartredact.view.base.BaseView
  */
 interface HomeView : BaseView {
 
-    fun getActivityHome() : FragmentActivity
 }

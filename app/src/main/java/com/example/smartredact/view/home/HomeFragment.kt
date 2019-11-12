@@ -27,9 +27,7 @@ class HomeFragment : BaseFragment(), HomeView {
     @Inject
     lateinit var mPresenter: HomePresenter
 
-    override fun getActivityHome(): FragmentActivity {
-        return this.activity!!
-    }
+    private var capturedUri: Uri? = null
 
     companion object {
         const val REQUEST_CODE_SELECT_FILE = 1234
@@ -85,19 +83,20 @@ class HomeFragment : BaseFragment(), HomeView {
         Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
             takePictureIntent.resolveActivity(this.activity?.packageManager!!).also {
                 val photoFile: File? = try {
-                    mPresenter.createImageFile()
+                    FileUtils.createImageFile(context)
                 } catch (ex: IOException) {
                     null
                 }
                 photoFile?.also {
-                    val photoURI: Uri = FileProvider.getUriForFile(
+                    capturedUri = FileProvider.getUriForFile(
                         this.context!!,
                         "com.example.smartredact.view.home",
                         it
                     )
-                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, capturedUri)
                     startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
                 }
+
             }
         }
     }
@@ -128,45 +127,45 @@ class HomeFragment : BaseFragment(), HomeView {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            if (data == null) {
-                when (requestCode) {
-                    REQUEST_IMAGE_CAPTURE -> {
-                        val session = Session(Session.NEW, Uri.parse(mPresenter.currentPhotoPath))
-                        val bundle = Bundle().apply {
-                            putParcelable(Constants.KEY_SESSION, session)
-                        }
+        if (resultCode != Activity.RESULT_OK) {
+            Toast.makeText(this.context, "picture or video not taken", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (data == null) {
+            when (requestCode) {
+                REQUEST_IMAGE_CAPTURE -> {
+                    val session = Session(Session.NEW, capturedUri)
+                    val bundle = Bundle().apply {
+                        putParcelable(Constants.KEY_SESSION, session)
+                    }
+                    val fragment = EditorImageFragment().apply {
+                        arguments = bundle
+                    }
+                    parentActivity.replaceFragment(fragment, android.R.id.content, true)
+                }
+            }
+        } else {
+            when (requestCode) {
+                REQUEST_VIDEO_CAPTURE,
+                REQUEST_CODE_SELECT_FILE -> {
+                    val session = Session(Session.NEW, data.data)
+                    val bundle = Bundle().apply {
+                        putParcelable(Constants.KEY_SESSION, session)
+                    }
+                    if (FileUtils.isImage(data.data)) {
                         val fragment = EditorImageFragment().apply {
+                            arguments = bundle
+                        }
+                        parentActivity.replaceFragment(fragment, android.R.id.content, true)
+                    } else {
+                        val fragment = EditorVideoFragment().apply {
                             arguments = bundle
                         }
                         parentActivity.replaceFragment(fragment, android.R.id.content, true)
                     }
                 }
-            } else {
-                when (requestCode) {
-                    REQUEST_VIDEO_CAPTURE,
-                    REQUEST_CODE_SELECT_FILE -> {
-                        val session = Session(Session.NEW, data.data)
-                        val bundle = Bundle().apply {
-                            putParcelable(Constants.KEY_SESSION, session)
-                        }
-                        if (FileUtils.isImage(data.data)) {
-                            val fragment = EditorImageFragment().apply {
-                                arguments = bundle
-                            }
-                            parentActivity.replaceFragment(fragment, android.R.id.content, true)
-                        } else {
-                            val fragment = EditorVideoFragment().apply {
-                                arguments = bundle
-                            }
-                            parentActivity.replaceFragment(fragment, android.R.id.content, true)
-                        }
-                    }
-                }
             }
-        } else {
-            //todo TuHA:
-            Toast.makeText(this.context, "picture or video not taken", Toast.LENGTH_SHORT).show()
         }
     }
 }
