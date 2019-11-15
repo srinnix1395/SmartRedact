@@ -35,41 +35,51 @@ class EditorVideoPresenter @Inject constructor() : BasePresenter<EditorVideoView
 
     fun getMetadataVideo(frameHeight: Float) {
         Single
-                .fromCallable {
-                    return@fromCallable videoUtils.extractMetadata(session.data!!, frameHeight)
-                }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnSubscribe {
-                    view?.showProgressDialog(true)
-                }
-                .doFinally {
-                    view?.showProgressDialog(false)
-                }
-                .subscribe({ videoMetadata ->
-                    this.videoMetadata = videoMetadata
-                    view?.showVideo(videoMetadata)
-                    extractFrames(videoMetadata)
-                    objectDetectionUtils.startSession(videoMetadata.width.toInt(), videoMetadata.height.toInt(), videoMetadata.orientation)
-                }, { error ->
-                    error.printStackTrace()
-                })
-                .addToCompositeDisposable(compositeDisposable)
+            .fromCallable {
+                return@fromCallable videoUtils.extractMetadata(session.data!!, frameHeight)
+            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnSubscribe {
+                view?.showProgressDialog(true)
+            }
+            .doFinally {
+                view?.showProgressDialog(false)
+            }
+            .subscribe({ videoMetadata ->
+                this.videoMetadata = videoMetadata
+                view?.showVideo(videoMetadata)
+                extractFrames(videoMetadata)
+                objectDetectionUtils.startSession(
+                    videoMetadata.width.toInt(),
+                    videoMetadata.height.toInt(),
+                    videoMetadata.orientation
+                )
+            }, { error ->
+                error.printStackTrace()
+            })
+            .addToCompositeDisposable(compositeDisposable)
     }
 
     private fun extractFrames(videoMetadata: VideoMetadata) {
         val frame = videoMetadata.frame
 
         videoUtils
-                .extractFrames(videoMetadata.data, frame.count, frame.interval, frame.width.toInt(), frame.height.toInt())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ (bitmap, position) ->
-                    view?.updateFrame(bitmap, position)
-                }, { error ->
-                    error.printStackTrace()
-                })
-                .addToCompositeDisposable(compositeDisposable)
+            .extractFrames(
+                videoMetadata.data,
+                frame.count,
+                frame.interval,
+                frame.width.toInt(),
+                frame.height.toInt()
+            )
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ (bitmap, position) ->
+                view?.updateFrame(bitmap, position)
+            }, { error ->
+                error.printStackTrace()
+            })
+            .addToCompositeDisposable(compositeDisposable)
     }
 
     fun calculateTextCurrentTime(progress: Float, total: Float, enabledSeek: Boolean) {
@@ -100,26 +110,40 @@ class EditorVideoPresenter @Inject constructor() : BasePresenter<EditorVideoView
         calculateTextCurrentTime(progressX, totalWidth, false)
     }
 
-    fun detectFaces(renderedWidth: Float, renderedHeight: Float, paddingHorizontal: Float, paddingVertical: Float) {
+    fun detectFaces(
+        renderedWidth: Float,
+        renderedHeight: Float,
+        paddingHorizontal: Float,
+        paddingVertical: Float
+    ) {
         Single
-                .fromCallable {
-                    val srcWidth = videoMetadata.width
-                    val srcHeight = videoMetadata.height
-                    return@fromCallable objectDetectionUtils.detectFacesVideo(videoMetadata.data, videoMetadata.duration, srcWidth, srcHeight, renderedWidth, renderedHeight, paddingHorizontal, paddingVertical)
-                }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnSubscribe {
-                    view?.showProgressDialog(true)
-                }
-                .doFinally {
-                    view?.showProgressDialog(false)
-                }
-                .subscribe({ listFace ->
-                    view?.showListFace(listFace)
-                }, { error ->
-                    error.printStackTrace()
-                })
-                .addToCompositeDisposable(compositeDisposable)
+            .fromCallable {
+                val srcWidth = videoMetadata.width
+                val srcHeight = videoMetadata.height
+                return@fromCallable objectDetectionUtils.detectFacesVideo(
+                    videoMetadata.data,
+                    videoMetadata.duration,
+                    srcWidth,
+                    srcHeight,
+                    renderedWidth,
+                    renderedHeight,
+                    paddingHorizontal,
+                    paddingVertical
+                )
+            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnSubscribe {
+                view?.showProgressDialog(true)
+            }
+            .doFinally {
+                view?.showProgressDialog(false)
+            }
+            .subscribe({ listFace ->
+                view?.showListFace(listFace)
+            }, { error ->
+                error.printStackTrace()
+            })
+            .addToCompositeDisposable(compositeDisposable)
     }
 }

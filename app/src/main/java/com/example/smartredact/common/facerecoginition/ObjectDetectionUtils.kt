@@ -7,11 +7,15 @@ import android.graphics.Matrix
 import android.graphics.RectF
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.util.Log
 import androidx.collection.ArrayMap
 import com.example.smartredact.common.constants.Constants
 import com.example.smartredact.common.utils.ImageUtils
 import com.example.smartredact.common.widget.faceview.Face
 import java.io.IOException
+import android.provider.MediaStore
+
+
 
 /**
  * Created by TuHA on 11/11/2019.
@@ -26,10 +30,11 @@ class ObjectDetectionUtils(private val context: Context) {
     init {
         try {
             detector = TensorFlowYoloDetector.create(
-                    context.assets,
-                    Constants.FaceDetection.YOLO_MODEL_FILE,
-                    Constants.FaceDetection.YOLO_INPUT_SIZE,
-                    Constants.FaceDetection.YOLO_BLOCK_SIZE)
+                context.assets,
+                Constants.FaceDetection.YOLO_MODEL_FILE,
+                Constants.FaceDetection.YOLO_INPUT_SIZE,
+                Constants.FaceDetection.YOLO_BLOCK_SIZE
+            )
         } catch (e: IOException) {
             e.printStackTrace()
         }
@@ -41,15 +46,25 @@ class ObjectDetectionUtils(private val context: Context) {
     fun startSession(previewWidth: Int, previewHeight: Int, orientation: Int) {
         val cropSize = Constants.FaceDetection.YOLO_INPUT_SIZE
         fullToCropMatrix = ImageUtils.getTransformationMatrix(
-                previewWidth, previewHeight,
-                cropSize, cropSize,
-                orientation, true)
+            previewWidth, previewHeight,
+            cropSize, cropSize,
+            orientation, true
+        )
 
         cropToFullMatrix = Matrix()
         fullToCropMatrix?.invert(cropToFullMatrix)
     }
 
-    fun detectFacesVideo(uri: Uri, duration: Long, srcWidth: Float, srcHeight: Float, renderedWidth: Float, renderedHeight: Float, paddingHorizontal: Float, paddingVertical: Float): List<Face> {
+    fun detectFacesVideo(
+        uri: Uri,
+        duration: Long,
+        srcWidth: Float,
+        srcHeight: Float,
+        renderedWidth: Float,
+        renderedHeight: Float,
+        paddingHorizontal: Float,
+        paddingVertical: Float
+    ): List<Face> {
         val retriever = MediaMetadataRetriever().apply {
             setDataSource(context, uri)
         }
@@ -57,7 +72,8 @@ class ObjectDetectionUtils(private val context: Context) {
         val mappedRecognitions = ArrayMap<String, ArrayList<Classifier.Recognition>>()
 
         for (i in 0 until frameCount) {
-            val bitmap = retriever.getFrameAtTime(i * 1000000, MediaMetadataRetriever.OPTION_CLOSEST)
+            val bitmap =
+                retriever.getFrameAtTime(i * 1000000, MediaMetadataRetriever.OPTION_CLOSEST)
             Canvas(croppedBitmap!!).apply {
                 drawBitmap(bitmap, fullToCropMatrix!!, null)
             }
@@ -67,7 +83,15 @@ class ObjectDetectionUtils(private val context: Context) {
                 listRecognitions.forEach {
                     val location = it.location
                     if (location != null && it.confidence > 0.5) {
-                        it.location = mapRectToActualSize(location, srcWidth, srcHeight, renderedWidth, renderedHeight, paddingHorizontal, paddingVertical)
+                        it.location = mapRectToActualSize(
+                            location,
+                            srcWidth,
+                            srcHeight,
+                            renderedWidth,
+                            renderedHeight,
+                            paddingHorizontal,
+                            paddingVertical
+                        )
 
                         it.startTime = i
                         it.endTime = i + 1
@@ -97,10 +121,72 @@ class ObjectDetectionUtils(private val context: Context) {
         }
     }
 
-    private fun mapRectToActualSize(location: RectF, srcWidth: Float, srcHeight: Float, renderedWidth: Float, renderedHeight: Float, paddingHorizontal: Float, paddingVertical: Float): RectF {
-        cropToFullMatrix?.mapRect(location)
+    fun detectFacesImage(
+        uri: Uri,
+        srcWidth: Float,
+        srcHeight: Float,
+        renderedWidth: Float,
+        renderedHeight: Float,
+        paddingHorizontal: Float,
+        paddingVertical: Float
+    ): List<Face> {
+        val mappedRecognitions = ArrayMap<String, ArrayList<Classifier.Recognition>>()
+        val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+        Canvas(croppedBitmap!!).apply {
+            drawBitmap(bitmap, fullToCropMatrix!!, null)
+        }
+        bitmap.recycle()
 
-        val mapLeft = location.left * renderedWidth / srcWidth
+        detector?.recognizeImage(croppedBitmap)?.let { listRecognitions ->
+            listRecognitions.forEach {
+                val location = it.location
+                if (location != null && it.confidence > 0.5) {
+                    it.location = mapRectToActualSize(
+                        location,
+                        srcWidth,
+                        srcHeight,
+                        renderedWidth,
+                        renderedHeight,
+                        paddingHorizontal,
+                        paddingVertical
+                    )
+
+                    it.startTime = 0
+                    it.endTime = 0
+
+                    val list = mappedRecognitions[it.id]
+                    if (list == null) {
+                        mappedRecognitions[it.id] = arrayListOf(it)
+                    } else {
+                        list.add(it)
+                    }
+                }
+            }
+        }
+
+        mappedRecognitions.values.forEach { value ->
+            value?.sortBy { it.startTime }
+        }
+
+        return mappedRecognitions.map { map ->
+            val firstFace = map.value.first()
+            val lastFace = map.value.last()
+
+            Face(map.key, firstFace.startTime, lastFace.startTime, map.value)
+        }
+    }
+
+    private fun mapRectToActualSize(
+        location: RectF,
+        srcWidth: Float,
+        srcHeight: Float,
+        renderedWidth: Float,
+        renderedHeight: Float,
+        paddingHorizontal: Float,
+        paddingVertical: Float
+    ): RectF {
+        cropToFullMatrix?.mapRect(location)
+         val mapLeft = location.left * renderedWidth / srcWidth
         val mapRight = mapLeft + location.width()
         val mapTop = location.top * renderedHeight / srcHeight
         val mapBottom = mapTop + location.height()
